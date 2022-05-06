@@ -6,14 +6,14 @@
         {
             "label": "Release",
             "type": "shell",
-            "command": "pushd build && cmake .. && cmake --build . --config RelWithDebInfo",
+            "command": "pushd build ; cmake .. ; cmake --build . --config RelWithDebInfo",
             "group": "build",
             "problemMatcher": "$msCompile"
         },
         {
             "label": "Debug",
             "type": "shell",
-            "command": "pushd build && cmake .. && cmake --build . --config Debug",
+            "command": "pushd build ; cmake .. ; cmake --build . --config Debug",
             "group": "build",
             "problemMatcher": "$msCompile"
         }

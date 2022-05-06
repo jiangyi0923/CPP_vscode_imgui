@@ -11,6 +11,7 @@ set(SOURCES_IMGUI "imgui.cpp"
                   "imstb_truetype.h"
                   "imgui_draw.cpp"
                   "imgui_widgets.cpp"
+                  "imgui_tables.cpp"
                   "imgui_demo.cpp")
 
 add_library(imgui STATIC ${SOURCES_IMGUI})
