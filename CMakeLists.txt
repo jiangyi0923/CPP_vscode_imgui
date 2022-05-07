@@ -39,7 +39,8 @@ endif()
 
 
 
-
+# 添加附加选项 使文本不需要 u8前缀
+add_compile_options(/utf-8)
 
 
 
@@ -47,6 +48,7 @@ endif()
 
 if(WIN32)
     add_executable(Base WIN32 ${SOURCES_BASE})
+
 else()
     add_executable(Base ${SOURCES_BASE})
 endif()
@@ -62,6 +64,7 @@ else()
 endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
+
 find_package(Threads REQUIRED)
 target_link_libraries(Base PRIVATE Threads::Threads)
 
@@ -86,6 +89,7 @@ add_subdirectory("deps/glad/")
 
 if(WIN32)
     target_include_directories(Base PRIVATE "deps/win")
+    #target_include_directories(Base PRIVATE "deps/include")
     add_definitions(-DWIN32_LEAN_AND_MEAN)
     if(MSVC)
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /IGNORE:4098 /IGNORE:4099")
@@ -96,6 +100,7 @@ if(WIN32)
     target_link_libraries(Base PRIVATE Version)
     target_link_libraries(Base PRIVATE Setupapi)
     target_link_libraries(Base PRIVATE Shcore)
+    
 endif()
 
 if(LINUX)
@@ -105,6 +110,16 @@ endif()
 if(APPLE)
 	target_link_libraries(Base PRIVATE ${SDL2_LIBRARIES})
 endif()
-
+#target_include_directories(Base PRIVATE "deps/include")
+#target_link_libraries(Base PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps/include/cpr/zlib.lib")
+#target_link_libraries(Base PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps/include/cpr/libcurl.lib")
+#target_link_libraries(Base PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps/include/cpr/cpr.lib")crypt32.lib
+#target_link_libraries(Base PRIVATE libcrypto)
+#target_link_libraries(Base PRIVATE crypt32)
+#target_link_libraries(Base PRIVATE libssl)
+#target_link_libraries(Base PRIVATE libcurl)
+#target_link_libraries(Base PRIVATE zlib)
+#target_link_libraries(Base PRIVATE cpr)
 target_link_libraries(Base PRIVATE imgui)
 target_link_libraries(Base PRIVATE glad)
+
