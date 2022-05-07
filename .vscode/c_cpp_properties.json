@@ -20,7 +20,7 @@
                 "limitSymbolsToIncludedHeaders": true
             },
             "compilerArgs": [
-                "/utf-8"
+
             ]
         }
     ],

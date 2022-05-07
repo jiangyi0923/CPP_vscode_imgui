@@ -7,8 +7,10 @@
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 #include "resource.h"
-#include <string.h>
-#include <tchar.h>
+
+#include "global.h"
+#include <thread>
+
 #pragma comment(lib, "wininet.lib")
 //#include <cpr/cpr.h>
 
@@ -56,6 +58,8 @@ void setup()
 	ImGui_ImplOpenGL3_Init();
 }
 
+string fewtext;
+
 void shutdown()
 {
 	ImGui_ImplOpenGL3_Shutdown();
@@ -87,7 +91,8 @@ void download(const char *Url, const char *save_as) /*将Url指向的地址的�
 				while (Number > 0)
 				{
 					InternetReadFile(handle2, Temp, 1024 - 1, &Number);
-
+					//printf_s(to_string(Number).c_str());
+					fewtext += to_string(Number+1) + "\r\n";
 					fwrite(Temp, sizeof(char), Number, stream);
 				}
 				fclose(stream);
@@ -132,33 +137,30 @@ int main(int, char **)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		// ImGui::ShowUserGuide();
 
-		static float f = 0.0f;
-		static int counter = 0;
+
+
 
 		ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
 
-		ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
-		// ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-		// ImGui::Checkbox("Another Window", &show_another_window);
-
-		ImGui::SliderFloat("float", &f, 0.0f, 1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
-		// ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-		if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
-			counter++;
-		ImGui::SameLine();
-		ImGui::Text("counter = %d", counter);
-		std::string link = "垃圾";
-		if (ImGui::Button(u8"下载"))
+		for (size_t i = 0; i < 设置.全部插件数据.size(); i++)
 		{
-			download("https://www.wemod.com/download/direct", "375480.exe");
+			if (ImGui::Checkbox(设置.全部插件数据[i].display_name.c_str(),&设置.全部插件数据[i].used))
+			{
+				设置.addlog	(设置.全部插件数据[i].display_name + (设置.全部插件数据[i].used? "启用":"禁用"));
+			}
 		}
-		ImGui::Button("下1载");
-		ImGui::Text(link.c_str());
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		ImGui::End();
+		
 
-		ImGui::ShowDemoWindow();
+		if (ImGui::Button("下载"))
+		{
+			thread t2(download, "https://www.wemod.com/download/direct", "375480.exe");
+			t2.detach();
+		}
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::TextUnformatted(fewtext.c_str());
+		ImGui::TextUnformatted(设置.output.c_str());
+		ImGui::End();
+				//ImGui::ShowDemoWindow();
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

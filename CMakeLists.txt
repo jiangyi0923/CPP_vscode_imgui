@@ -12,7 +12,9 @@ project(Base VERSION 1.1
 
 set(SOURCES_BASE "src/main.cpp"
                  "src/imgui_impl_sdl.cpp"
-                 "src/imgui_impl_opengl3.cpp")
+                 "src/imgui_impl_opengl3.cpp"
+                 "src/settings.cpp"
+                 )
 
 # setup OS-specific options
 
