@@ -29,6 +29,10 @@ public:
     vector<插件> 全部插件数据;
     void addlog(string mesgs);
     string output;
+    int y, m, d;
+    string dmd5s;
+    string fileday = "未获取到/获取中";
+    int apierro = 0;
+    bool 限制安装 = false;
 private:
-    
 };

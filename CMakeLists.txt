@@ -124,4 +124,6 @@ endif()
 #target_link_libraries(Base PRIVATE cpr)
 target_link_libraries(Base PRIVATE imgui)
 target_link_libraries(Base PRIVATE glad)
+target_sources(Base PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/Base.rc")
+
 
