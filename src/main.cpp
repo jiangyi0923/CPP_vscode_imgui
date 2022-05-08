@@ -180,8 +180,7 @@ int main(int, char **)
 		{
 			if (ImGui::BeginTabItem("安装和更新"))
 			{
-					改了改
-				ImGui::EndTabItem();
+
 			}
 			if (ImGui::BeginTabItem("安装日志"))
 			{
