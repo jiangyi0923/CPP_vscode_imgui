@@ -1,7 +1,14 @@
 ﻿#include "settings.h"
+#include <Windows.h>
+
+#include <io.h>
+#include <direct.h>
+#define PATH_DELIMITER '\\'
 
 settings::settings()
 {
+    CreateDir("Installcache");
+    pg_ini.SetUnicode(true);
     全部插件数据.push_back({0, "gw2addon_arcdps.dll", "ARCDPS插件", "", "Shift + Alt + T 设置界面\r\nShift + Alt + H 隐藏 / 显示所有界面\r\nShift + Alt + B BUFF面板（BUFF TABLE）显示/隐藏\r\nShift + Alt + C 团队统计（AREA STATS） 显示 / 隐藏\r\nShift + Alt + S 个人统计（SELF） 显示 / 隐藏", true, 0, 0, ""});
     全部插件数据.push_back({1, "d3d9_arcdps_sct.dll", "SCT流动输出", "", "快捷键:无,设置在dps插件设置菜单内\r\n不太稳定,不建议安装,在战场和pvp概率报错", false, 0, 0, ""});
     全部插件数据.push_back({2, "d3d9_arcdps_mechanicschs.dll", "团队机制插件", "", "日志快捷键:Alt+Shift+L\r\n文本快捷键:Alt+Shift+N\r\n团队插件不打10人本不建议安装", false, 0, 0, ""});
@@ -23,10 +30,195 @@ settings::settings()
 
 settings::~settings()
 {
+}
 
+void settings::load_set()
+{
+    addlog("开始读取设置存档");
+    CreateDir(GetExePath() + "\\Installcache");
+    pg_ini.SetUnicode(true);
+    游戏根目录 = GetExePath();
+    std::string ppp = 游戏根目录 + "\\Installcache\\install.ini";
+    pg_ini.LoadFile(ppp.c_str());
+    dx11模式 = std::stoi(pg_ini.GetValue("general", "dx11模式", "0"));
+    d912pxy_配置 = std::stoi(pg_ini.GetValue("general", "d912pxy_配置", "2"));
+    字体大小 = (float)pg_ini.GetDoubleValue("general", "字体大小", 18.0);
+    主题样式 = std::stoi(pg_ini.GetValue("general", "主题样式", "0"));
+    首次使用 = pg_ini.GetBoolValue("general", "首次使用", true);
+    for (size_t i = 0; i < 全部插件数据.size(); i++)
+    {
+        全部插件数据[i].used = pg_ini.GetBoolValue("general", 全部插件数据[i].display_name.c_str(), 全部插件数据[i].used);
+    }
+
+    addlog("已成功读取/设定选项存档");
+}
+
+void settings::save_set()
+{
+    addlog("开始保存设置存档");
+    pg_ini.SetUnicode(true);
+    pg_ini.SetValue("general", "dx11模式", std::to_string(dx11模式).c_str());
+    pg_ini.SetValue("general", "d912pxy_配置", std::to_string(d912pxy_配置).c_str());
+    pg_ini.SetBoolValue("general", "首次使用", 首次使用);
+    pg_ini.SetDoubleValue("general", "字体大小", (double)字体大小);
+    pg_ini.SetValue("general", "主题样式", std::to_string(主题样式).c_str());
+    // writelog(to_string(设置.首次使用));
+
+    for (size_t i = 0; i < 全部插件数据.size(); i++)
+    {
+        pg_ini.SetBoolValue("general", 全部插件数据[i].display_name.c_str(), 全部插件数据[i].used);
+    }
+
+    std::string ppp = 游戏根目录 + "\\Installcache\\install.ini";
+    pg_ini.SaveFile(ppp.c_str());
+    addlog("保存设置存档");
+}
+
+string settings::GetExePath(void)
+{
+    char szFilePath[MAX_PATH + 1] = {0};
+    GetModuleFileNameA(nullptr, szFilePath, MAX_PATH);
+    (strrchr(szFilePath, '\\'))[0] = 0; // 删除文件名，只获得路径字串
+    string path = szFilePath;
+    return path;
+}
+
+//得到文件是否存在
+inline bool settings::file_exists(const string &name)
+{
+    struct stat buffer;
+    return (stat(name.c_str(), &buffer) == 0);
+}
+
+//删除目录
+bool settings::RemoveDir(string FileDir)
+{
+    string strDir = FileDir;
+    if (strDir.at(strDir.length() - 1) != '\\')
+        strDir += '\\';
+    WIN32_FIND_DATAA wfd;
+    HANDLE hFind = FindFirstFileA((strDir + "*.*").c_str(), &wfd);
+    if (hFind == INVALID_HANDLE_VALUE)
+        return false;
+    do
+    {
+        if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        {
+            if (_stricmp(wfd.cFileName, ".") != 0 &&
+                _stricmp(wfd.cFileName, "..") != 0)
+                RemoveDir((strDir + wfd.cFileName).c_str());
+        }
+        else
+        {
+            DeleteFileA((strDir + wfd.cFileName).c_str());
+        }
+    } while (FindNextFileA(hFind, &wfd));
+    FindClose(hFind);
+    RemoveDirectoryA(FileDir.c_str());
+    //输出内容 += "删除目录 " + szFileDir + "\r\n";
+    return true;
+}
+//创建目录文件夹
+void settings::CreateDir(string FileDir)
+{
+    std::string folder_builder;
+    std::string sub;
+    sub.reserve(FileDir.size());
+    for (auto it = FileDir.begin(); it != FileDir.end(); ++it)
+    {
+        // cout << *(folder.end()-1) << endl;
+        const char c = *it;
+        sub.push_back(c);
+        if (c == PATH_DELIMITER || it == FileDir.end() - 1)
+        {
+            folder_builder.append(sub);
+            if (0 != ::_access(folder_builder.c_str(), 0))
+            {
+                // this folder not exist
+                if (0 != ::_mkdir(folder_builder.c_str()))
+                {
+                    // create failed
+                    return;
+                }
+            }
+            sub.clear();
+        }
+    }
+}
+
+//目录名称检测
+bool settings::mincjianc()
+{
+    bool trr = false;
+
+    int i = 0;
+    while (游戏根目录[i])
+    {
+        if (((unsigned char)游戏根目录[i]) > 128)
+        {
+            trr = true;
+            break;
+            i += 2;
+        }
+        else
+        {
+            i++;
+        }
+    }
+    return trr;
+}
+
+//删除文件
+void settings::file_delete(string filePath)
+{
+    if (file_exists(filePath))
+    {
+        if (remove(filePath.c_str()) == 0)
+        {
+            addlog("删除" + filePath + "成功");
+        }
+        else
+        {
+            addlog("删除" + filePath + "失败");
+        }
+    }
+}
+//重命名
+void settings::file_rename(string filePath, string tofilePath)
+{
+    if (file_exists(filePath) && !file_exists(tofilePath))
+    {
+        if (rename(filePath.c_str(), tofilePath.c_str()) == 0)
+        {
+        }
+    }
+}
+//复制文件
+void settings::file_copy_to(string filePath, string tofilePath)
+{
+    if (file_exists(filePath))
+    {
+        CopyFileA(filePath.c_str(), tofilePath.c_str(), true);
+    }
 }
 
 void settings::addlog(string mesgs)
 {
     output.append(mesgs + "\r\n");
+}
+
+void settings::mesgebox(string pszTitle, string pszMsg)
+{
+    int bufflen = MultiByteToWideChar(CP_UTF8, 0, pszMsg.c_str(), -1, nullptr, 0);
+    WCHAR *wideMsg = new WCHAR[bufflen + 1];
+    ::memset(wideMsg, 0, sizeof(WCHAR) * (bufflen + 1));
+    MultiByteToWideChar(CP_UTF8, 0, pszMsg.c_str(), -1, wideMsg, bufflen);
+
+    bufflen = MultiByteToWideChar(CP_UTF8, 0, pszTitle.c_str(), -1, nullptr, 0);
+    WCHAR *wideTitle = new WCHAR[bufflen + 1];
+    ::memset(wideTitle, 0, sizeof(WCHAR) * (bufflen + 1));
+    MultiByteToWideChar(CP_UTF8, 0, pszTitle.c_str(), -1, wideTitle, bufflen);
+    MessageBoxW(NULL, wideMsg, wideTitle, 0);
+    delete[] wideMsg;
+    delete[] wideTitle;
 }

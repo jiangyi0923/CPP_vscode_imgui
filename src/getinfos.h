@@ -7,6 +7,7 @@
 
 #include <io.h>
 
+
 class getinfos
 {
 private:
@@ -16,14 +17,20 @@ private:
     string downloadinfo(const char *Url);
     tm gettime();
 
+    void toget();
+    void toget_lc();
+
 public:
     getinfos(/* args */);
     ~getinfos();
-    void toget();
+    bool thisonce = true;
+
+    void getto(int f);
 };
 
 getinfos::getinfos(/* args */)
 {
+    
 }
 
 getinfos::~getinfos()
@@ -37,6 +44,22 @@ tm getinfos::gettime()
     localtime_s(&buf, &t);
     return buf;
 }
+
+void getinfos ::getto(int f)
+{
+    if (f == 0)
+    {
+        thread few(&getinfos::toget, this);
+        few.detach();
+    }
+    else
+    {
+        thread few(&getinfos::toget_lc, this);
+        few.detach();
+    }
+}
+
+
 
 string getinfos::downloadinfo(const char *Url) /*将Url指向的地址的文件下载到save_as指向的本地文件*/
 {
@@ -56,7 +79,8 @@ string getinfos::downloadinfo(const char *Url) /*将Url指向的地址的文件�
             {
                 设置.addlog("从服务器获取API数据成功");
                 //设置.addlog("1");
-                if (fopen_s(&stream, "jsoninfo.json", "w+b") != EINVAL)
+                
+                if (fopen_s(&stream, "Installcache/jsoninfo.json", "wb") != EINVAL)
                 {
                     //设置.addlog("2");
                     // int err = 0;
@@ -73,13 +97,43 @@ string getinfos::downloadinfo(const char *Url) /*将Url指向的地址的文件�
                     fclose(stream);
                     //设置.addlog("5");
                     FILE *stream2;
-                    设置.addlog("写入临时文件...");
-                    fopen_s(&stream2, "jsoninfo.json", "r");
+                    设置.addlog("将获取的信息写入临时文件jsoninfo.json中...");
+                    fopen_s(&stream2, "Installcache/jsoninfo.json", "r");
                     //设置.addlog("6");
                     struct stat sb
                     {
                     };
-                    stat("jsoninfo.json", &sb);
+                    if (stat("Installcache/jsoninfo.json", &sb) != 0)
+                    {
+                        /* code */
+                        设置.apierro = 101;
+                        switch (errno)
+                        {
+                        case ENOENT:
+                            设置.addlog("解析data.txt数据方法失败!-文件不存在");
+                            设置.addlog("请确认Installcache目录下存在data.txt!");
+                            break;
+                        case ENOTDIR:
+                            设置.addlog("解析data.txt数据方法失败!-路径错误");
+                            break;
+                        case ELOOP:
+                            设置.addlog("解析data.txt数据方法失败!-文件有过多符号连接");
+                            break;
+                        case EFAULT:
+                            设置.addlog("解析data.txt数据方法失败!-无效指针");
+                            break;
+                        case ENAMETOOLONG:
+                            设置.addlog("解析data.txt数据方法失败!-路径名称太长");
+                            break;
+                        case EACCES:
+                            设置.addlog("解析data.txt数据方法失败!-读取被拒绝");
+                            break;
+                        default:
+                            设置.addlog("解析data.txt数据方法失败!-未知错误");
+                        }
+
+                        return "";
+                    }
                     //设置.addlog(std::to_string(sb.st_size) );
                     //设置.addlog(std::to_string(err) );
                     //设置.addlog("7");
@@ -87,10 +141,12 @@ string getinfos::downloadinfo(const char *Url) /*将Url指向的地址的文件�
                     fread(const_cast<char *>(response.data()), sb.st_size, 1, stream2);
                     //.addlog("8");
                     fclose(stream2);
+                    if (handle2 != NULL)
+                    {
+                        InternetCloseHandle(handle2);
+                        handle2 = NULL;
+                    }
                 }
-
-                InternetCloseHandle(handle2);
-                handle2 = NULL;
             }
             InternetCloseHandle(hSession);
             hSession = NULL;
@@ -154,10 +210,12 @@ void getinfos::getfileinfo(string filebody)
         }
         设置.addlog("解析插件信息数据方法完成!");
     }
-    catch (...)
+    catch (const std::exception &e)
     {
+        // std::cerr << e.what() << '\n';
+        设置.addlog(e.what());
         设置.apierro = 201;
-        设置.addlog("解析插件信息数据方法失败!");
+        设置.addlog("解析插件信息数据方法失败");
     }
 }
 
@@ -202,5 +260,92 @@ void getinfos::toget()
         设置.addlog("解析API信息数据方法失败!");
         return;
         //::cerr << e.what() << '\n';
+    }
+}
+
+void getinfos::toget_lc()
+{
+    设置.apierro = 0;
+    try
+    {
+        /* code */
+        string response;
+        FILE *stream2;
+        设置.addlog("读取data.txt...");
+        fopen_s(&stream2, "Installcache/data.txt", "r");
+        //设置.addlog("6");
+        struct stat sb
+        {
+        };
+
+        if (stat("Installcache/data.txt", &sb) != 0)
+        {
+            /* code */
+            设置.apierro = 101;
+            switch (errno)
+            {
+            case ENOENT:
+                设置.addlog("解析data.txt数据方法失败!-文件不存在");
+                设置.addlog("请确认Installcache目录下存在data.txt!");
+                break;
+            case ENOTDIR:
+                设置.addlog("解析data.txt数据方法失败!-路径错误");
+                break;
+            case ELOOP:
+                设置.addlog("解析data.txt数据方法失败!-文件有过多符号连接");
+                break;
+            case EFAULT:
+                设置.addlog("解析data.txt数据方法失败!-无效指针");
+                break;
+            case ENAMETOOLONG:
+                设置.addlog("解析data.txt数据方法失败!-路径名称太长");
+                break;
+            case EACCES:
+                设置.addlog("解析data.txt数据方法失败!-读取被拒绝");
+                break;
+            default:
+                设置.addlog("解析data.txt数据方法失败!-未知错误");
+            }
+
+            return;
+        }
+
+        response.resize(sb.st_size);
+        fread(const_cast<char *>(response.data()), sb.st_size, 1, stream2);
+        //.addlog("8");
+        fclose(stream2);
+        设置.addlog("开始解析data.txt...");
+        quicktype::Giteejson data = nlohmann::json::parse(response);
+
+        getfileinfo(data.get_body());
+        //设置.addlog("1");
+        for (size_t i = 0; i < data.get_assets().size(); i++)
+        {
+            if (!data.get_assets()[i].get_browser_download_url()._Equal("https://gitee.com/jiangyi0923/gw2chajianfile/repository/archive/0629"))
+            {
+                //设置.addlog("2");
+                std::string gre = *data.get_assets()[i].get_name().get();
+                //设置.addlog(gre);
+                //设置.addlog("3");
+                for (size_t t = 0; t < 设置.全部插件数据.size(); t++)
+                {
+
+                    if (gre._Equal(设置.全部插件数据[t].Internal_name))
+                    {
+                        //设置.addlog("4");
+                        设置.全部插件数据[t].Download_url = data.get_assets()[i].get_browser_download_url();
+                        //设置.addlog(设置.全部插件数据[t].Download_url);
+                    }
+                }
+            }
+        }
+        设置.addlog("解析API信息数据方法完成!");
+    }
+    catch (const std::exception &e)
+    {
+        设置.addlog(e.what());
+        设置.apierro = 301;
+        设置.addlog("解析API信息数据方法失败!");
+        return;
     }
 }
