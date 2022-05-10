@@ -9,6 +9,7 @@
 
 #include "global.h"
 #include "getinfos.h"
+#include "install.h"
 //#include <cpr/cpr.h>
 
 using namespace std;
@@ -108,7 +109,6 @@ void setup()
 	ImGui_ImplOpenGL3_Init();
 }
 
-string fewtext;
 
 void shutdown()
 {
@@ -136,44 +136,14 @@ static void HelpMarker(const char *desc)
 	}
 }
 
-void download(const char *Url, const char *save_as) /*将Url指向的地址的文件下载到save_as指向的本地文件*/
-{
-	BYTE Temp[1024];
-	ULONG Number = 1;
 
-	FILE *stream;
-	HINTERNET hSession = InternetOpenA("RookIE/1.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
-	if (hSession != NULL)
-	{
-		HINTERNET handle2 = InternetOpenUrlA(hSession, Url, NULL, 0, INTERNET_FLAG_DONT_CACHE, 0);
-		if (handle2 != NULL)
-		{
-
-			if (fopen_s(&stream, save_as, "wb") != EINVAL)
-			{
-				while (Number > 0)
-				{
-					InternetReadFile(handle2, Temp, 1024 - 1, &Number);
-					// printf_s(to_string(Number).c_str());
-					fewtext += to_string(Number + 1) + "\r\n";
-					fwrite(Temp, sizeof(char), Number, stream);
-				}
-				fclose(stream);
-			}
-
-			InternetCloseHandle(handle2);
-			handle2 = NULL;
-		}
-		InternetCloseHandle(hSession);
-		hSession = NULL;
-	}
-}
 
 int main(int, char **)
 {
 
 	setup();
 	getinfos gqw;
+	install 安装;
 
 	bool running = true;
 	while (running)
@@ -474,9 +444,10 @@ int main(int, char **)
 									设置.isStarttodo = true;
 									设置.save_set();
 									设置.addlog("开始下载进程");
-									//设置.fordolo();
-									//设置.是卸载 = false;
-									//设置.是疑难安装 = false;
+									
+									安装.fordolo();
+									安装.是卸载 = false;
+									安装.是疑难安装 = false;
 								}
 							}
 							ImGui::SameLine();
@@ -490,9 +461,11 @@ int main(int, char **)
 										设置.isStarttodo = true;
 										设置.save_set();
 										设置.addlog("开始下载进程");
-										//设置.fordolo();
-										//设置.是卸载 = false;
-										//设置.是疑难安装 = true;
+
+										
+										安装.是卸载 = false;
+										安装.是疑难安装 = true;
+										安装.fordolo();
 									}
 								}
 								if (ImGui::IsItemHovered())
@@ -508,7 +481,7 @@ int main(int, char **)
 								设置.addlog("开始删除addons目录");
 								if (GetFileAttributesA((设置.游戏根目录 + "\\addons").c_str()))
 								{
-									//设置.RemoveDir(设置.游戏根目录 + "\\addons");
+									设置.RemoveDir(设置.游戏根目录 + "\\addons");
 								}
 							}
 							if (ImGui::IsItemHovered())
@@ -525,8 +498,10 @@ int main(int, char **)
 							if (ImGui::Button("卸载插件"))
 							{
 								设置.addlog("开始卸载插件");
-								//设置.是卸载 = true;
-								//设置.卸载逻辑();
+								
+								安装.是卸载 = false;
+								安装.是疑难安装 = false;
+								安装.卸载逻辑();
 							}
 							if (ImGui::IsItemHovered())
 							{
@@ -538,7 +513,7 @@ int main(int, char **)
 						else
 						{
 							ImGui::Text("正在行动中");
-							// ImGui::ProgressBar(设置.项目进度(), ImVec2(-1.0f, 0.0f));
+							ImGui::ProgressBar(安装.项目进度(), ImVec2(-1.0f, 0.0f));
 						}
 					}
 
@@ -661,6 +636,10 @@ int main(int, char **)
 				{
 					ShellExecuteA(0, 0, "https://reshade.me", 0, 0, SW_SHOW);
 				}
+				if (ImGui::SmallButton("前往本工具开源项目库"))
+				{
+					ShellExecuteA(0, 0, "https://github.com/jiangyi0923/CPP_vscode_imgui", 0, 0, SW_SHOW);
+				}
 
 				ImGui::EndChild();
 				ImGui::EndTabItem();
@@ -705,7 +684,7 @@ int main(int, char **)
 						x = 400;
 						y = 620;
 					}
-					SDL_SetWindowSize(window,x,y);
+					SDL_SetWindowSize(window, x, y);
 				}
 				ImGui::EndTabItem();
 			}

@@ -14,6 +14,8 @@ set(SOURCES_BASE "src/main.cpp"
                  "src/imgui_impl_sdl.cpp"
                  "src/imgui_impl_opengl3.cpp"
                  "src/settings.cpp"
+                 "src/getinfos.cpp"
+                 "src/install.cpp"
                  )
 
 # setup OS-specific options
