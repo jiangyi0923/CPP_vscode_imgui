@@ -43,7 +43,9 @@ public:
     float 字体大小;
     int 主题样式 = 0;
     string 游戏根目录;
+    bool 空中网客户端;
     int d912pxy_配置 = 2;
+    bool vc版本不合格 = false;
     //得到当前程序目录
     string GetExePath(void);
     //创建目录文件夹
@@ -53,7 +55,7 @@ public:
     //目录名称检测
     bool mincjianc();
     //得到文件是否存在
-    inline bool file_exists(const string& name);
+    bool file_exists(string name);
     //复制文件
     void file_copy_to(string filePath, string tofilePath);
     //重命名文件
@@ -63,6 +65,13 @@ public:
 
     void load_set();
     void save_set();
+    void Versionchick();
+    float 项目完成数量 = 0;
+    float 项目总计数量 = 0;
+    float 项目进度();
+
 private:
     CSimpleIniA pg_ini;
+    string GetFIleDescription(CHAR *file_path);
+    int v1, v2;
 };

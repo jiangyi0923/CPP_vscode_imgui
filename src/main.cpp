@@ -10,7 +10,9 @@
 #include "global.h"
 #include "getinfos.h"
 #include "install.h"
-//#include <cpr/cpr.h>
+
+#include "tlhelp32.h"
+#pragma comment(lib, "Msi.lib")
 
 using namespace std;
 
@@ -44,6 +46,84 @@ bool LoadFontResource(UINT resId, void *&dataPtr, size_t &dataSize)
 	return false;
 }
 
+int foundProcess360()
+{
+	string program_name = "360Safe.exe";
+	string program_name_1 = "360sd.exe";
+	string program_name_2 = "360tray.exe";
+	bool ret = false;
+	HANDLE info_handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0); //拍摄系统中所有进程的快照
+	if (info_handle == INVALID_HANDLE_VALUE)
+	{
+		// printf("CreateToolhelp32Snapshot fail!!\n\n");
+		return false;
+	}
+
+	tagPROCESSENTRY32 program_info;
+	program_info.dwSize = sizeof(tagPROCESSENTRY32);							//设置结构体大小
+	int bResult = Process32First(info_handle, (LPPROCESSENTRY32)&program_info); //获取所有进程中第一个进程的信息
+	if (!bResult)
+	{
+		// printf("Process32FirstW fail!!\n\n");
+		return false;
+	}
+	while (bResult)
+	{
+		// char* pro_name = Wchar2char(program_info.szExeFile);
+		//输出内容 += string(program_info.szExeFile) + "\r\n";//GW2WGLauncher.exe
+		if (program_name._Equal(string(program_info.szExeFile)) ||
+			program_name_1._Equal(string(program_info.szExeFile)) ||
+			program_name_2._Equal(string(program_info.szExeFile)))
+		{
+			ret = true;
+			break;
+		}
+		//获得下一个进程的进程信息
+		bResult = Process32Next(info_handle, (LPPROCESSENTRY32)&program_info);
+	}
+	CloseHandle(info_handle); //关闭句柄
+	return ret;
+}
+
+//检测激战2是否在运行
+int foundProcessByName()
+{
+	string program_name = "Gw2-64.exe";
+	string program_name1 = "GW2WGLauncher.exe";
+	string program_name2 = "GW2Lanucher.exe";
+	bool ret = false;
+	HANDLE info_handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0); //拍摄系统中所有进程的快照
+	if (info_handle == INVALID_HANDLE_VALUE)
+	{
+		// printf("CreateToolhelp32Snapshot fail!!\n\n");
+		return false;
+	}
+
+	tagPROCESSENTRY32 program_info;
+	program_info.dwSize = sizeof(tagPROCESSENTRY32);							//设置结构体大小
+	int bResult = Process32First(info_handle, (LPPROCESSENTRY32)&program_info); //获取所有进程中第一个进程的信息
+	if (!bResult)
+	{
+		// printf("Process32FirstW fail!!\n\n");
+		return false;
+	}
+
+	while (bResult)
+	{
+		// char* pro_name = Wchar2char(program_info.szExeFile);
+		//输出内容 += string(program_info.szExeFile) + "\r\n";//GW2WGLauncher.exe
+		if (program_name._Equal(string(program_info.szExeFile)) || program_name1._Equal(string(program_info.szExeFile)) || program_name2._Equal(string(program_info.szExeFile)))
+		{
+			ret = true;
+			break;
+		}
+		//获得下一个进程的进程信息
+		bResult = Process32Next(info_handle, (LPPROCESSENTRY32)&program_info);
+	}
+	CloseHandle(info_handle); //关闭句柄
+	return ret;
+}
+
 void setup()
 {
 
@@ -66,7 +146,7 @@ void setup()
 		y = 620;
 	}
 
-	window = SDL_CreateWindow("激战2插件在线安装工具", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
+	window = SDL_CreateWindow("激战2插件在线安装工具 V2.1.1b", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	// SDL_SetWindowSize(window,x,y);
@@ -109,7 +189,6 @@ void setup()
 	ImGui_ImplOpenGL3_Init();
 }
 
-
 void shutdown()
 {
 	ImGui_ImplOpenGL3_Shutdown();
@@ -136,10 +215,118 @@ static void HelpMarker(const char *desc)
 	}
 }
 
-
-
 int main(int, char **)
 {
+	if (foundProcess360())
+	{
+		string pszMsg = "检测到您正在运行垃圾软件360\r\n请关闭或者卸载这个垃圾软件\r\n本程序将会关闭!";
+		string pszTitle = "您正在运行垃圾软件!";
+
+		int bufflen = MultiByteToWideChar(CP_UTF8, 0, pszMsg.c_str(), -1, nullptr, 0);
+		WCHAR *wideMsg = new WCHAR[bufflen + 1];
+		::memset(wideMsg, 0, sizeof(WCHAR) * (bufflen + 1));
+		MultiByteToWideChar(CP_UTF8, 0, pszMsg.c_str(), -1, wideMsg, bufflen);
+
+		bufflen = MultiByteToWideChar(CP_UTF8, 0, pszTitle.c_str(), -1, nullptr, 0);
+		WCHAR *wideTitle = new WCHAR[bufflen + 1];
+		::memset(wideTitle, 0, sizeof(WCHAR) * (bufflen + 1));
+		MultiByteToWideChar(CP_UTF8, 0, pszTitle.c_str(), -1, wideTitle, bufflen);
+		MessageBoxW(NULL, wideMsg, wideTitle, 0);
+		delete[] wideMsg;
+		delete[] wideTitle;
+		return 1;
+	}
+
+	if (foundProcessByName())
+	{
+		string pszMsg = "检测到您正在运行激战2程序\r\n请关闭激战2后安装插件\r\n本程序将会关闭!";
+		string pszTitle = "激战2正在运行!";
+
+		int bufflen = MultiByteToWideChar(CP_UTF8, 0, pszMsg.c_str(), -1, nullptr, 0);
+		WCHAR *wideMsg = new WCHAR[bufflen + 1];
+		::memset(wideMsg, 0, sizeof(WCHAR) * (bufflen + 1));
+		MultiByteToWideChar(CP_UTF8, 0, pszMsg.c_str(), -1, wideMsg, bufflen);
+
+		bufflen = MultiByteToWideChar(CP_UTF8, 0, pszTitle.c_str(), -1, nullptr, 0);
+		WCHAR *wideTitle = new WCHAR[bufflen + 1];
+		::memset(wideTitle, 0, sizeof(WCHAR) * (bufflen + 1));
+		MultiByteToWideChar(CP_UTF8, 0, pszTitle.c_str(), -1, wideTitle, bufflen);
+		MessageBoxW(NULL, wideMsg, wideTitle, 0);
+		delete[] wideMsg;
+		delete[] wideTitle;
+		return 1;
+	}
+	if (设置.file_exists(设置.GetExePath() + "\\Gw2-64.exe"))
+	{
+		设置.游戏根目录 = 设置.GetExePath();
+		设置.addlog("当前目录:" + 设置.游戏根目录);
+		if (设置.mincjianc())
+		{
+			//有中文
+			string pszMsg = "检测到您当前的激战2目录文件夹名称中有中文\r\n为避免出现不良现象请重命名文件夹\r\n列如\"C:\\Program Files\\Guild Wars 2 \"这样的非中文目录 \r\n本程序将会关闭!";
+			string pszTitle = "激战2目录文件夹名称中有中文!!";
+
+			int bufflen = MultiByteToWideChar(CP_UTF8, 0, pszMsg.c_str(), -1, nullptr, 0);
+			WCHAR *wideMsg = new WCHAR[bufflen + 1];
+			::memset(wideMsg, 0, sizeof(WCHAR) * (bufflen + 1));
+			MultiByteToWideChar(CP_UTF8, 0, pszMsg.c_str(), -1, wideMsg, bufflen);
+
+			bufflen = MultiByteToWideChar(CP_UTF8, 0, pszTitle.c_str(), -1, nullptr, 0);
+			WCHAR *wideTitle = new WCHAR[bufflen + 1];
+			::memset(wideTitle, 0, sizeof(WCHAR) * (bufflen + 1));
+			MultiByteToWideChar(CP_UTF8, 0, pszTitle.c_str(), -1, wideTitle, bufflen);
+			MessageBoxW(NULL, wideMsg, wideTitle, 0);
+			delete[] wideMsg;
+			delete[] wideTitle;
+			return 1;
+		}
+		else
+		{
+
+			设置.CreateDir("Installcache");
+
+			if (设置.file_exists(设置.游戏根目录 + "\\GW2WGLauncher.exe"))
+			{
+				设置.空中网客户端 = false;
+				设置.addlog("客户端:WG版:");
+			}
+			else if (设置.file_exists(设置.游戏根目录 + "\\GW2Lanucher.exe"))
+			{
+				设置.空中网客户端 = false;
+				设置.addlog("客户端:顺网版或其他");
+			}
+			else
+			{
+				设置.空中网客户端 = true;
+				设置.addlog("客户端:空中网或外服");
+			}
+
+			设置.Versionchick();
+			if (设置.vc版本不合格)
+			{
+				设置.mesgebox("vc++版本不合格", "检测到您安装的vc++版本过低或未安装\r\n请前往QQ群或百度下载安装VC++2015-2019/VC++2015-2022 V14.27以上64位版本!");
+			}
+		}
+	}
+	else
+	{
+		string pszMsg = "检测到您当前的目录中未发现Gw2-64.exe程序\r\n请将本程序放置在游戏根目录下\r\n本程序将会关闭!";
+		string pszTitle = "未发现Gw2-64.exe!";
+
+		int bufflen = MultiByteToWideChar(CP_UTF8, 0, pszMsg.c_str(), -1, nullptr, 0);
+		WCHAR *wideMsg = new WCHAR[bufflen + 1];
+		::memset(wideMsg, 0, sizeof(WCHAR) * (bufflen + 1));
+		MultiByteToWideChar(CP_UTF8, 0, pszMsg.c_str(), -1, wideMsg, bufflen);
+
+		bufflen = MultiByteToWideChar(CP_UTF8, 0, pszTitle.c_str(), -1, nullptr, 0);
+		WCHAR *wideTitle = new WCHAR[bufflen + 1];
+		::memset(wideTitle, 0, sizeof(WCHAR) * (bufflen + 1));
+		MultiByteToWideChar(CP_UTF8, 0, pszTitle.c_str(), -1, wideTitle, bufflen);
+		MessageBoxW(NULL, wideMsg, wideTitle, 0);
+		delete[] wideMsg;
+		delete[] wideTitle;
+		return 1;
+	}
 
 	setup();
 	getinfos gqw;
@@ -444,10 +631,10 @@ int main(int, char **)
 									设置.isStarttodo = true;
 									设置.save_set();
 									设置.addlog("开始下载进程");
-									
-									安装.fordolo();
 									安装.是卸载 = false;
 									安装.是疑难安装 = false;
+									安装.fordolo();
+									
 								}
 							}
 							ImGui::SameLine();
@@ -462,7 +649,6 @@ int main(int, char **)
 										设置.save_set();
 										设置.addlog("开始下载进程");
 
-										
 										安装.是卸载 = false;
 										安装.是疑难安装 = true;
 										安装.fordolo();
@@ -498,7 +684,7 @@ int main(int, char **)
 							if (ImGui::Button("卸载插件"))
 							{
 								设置.addlog("开始卸载插件");
-								
+
 								安装.是卸载 = false;
 								安装.是疑难安装 = false;
 								安装.卸载逻辑();
@@ -513,7 +699,7 @@ int main(int, char **)
 						else
 						{
 							ImGui::Text("正在行动中");
-							ImGui::ProgressBar(安装.项目进度(), ImVec2(-1.0f, 0.0f));
+							ImGui::ProgressBar(设置.项目进度(), ImVec2(-1.0f, 0.0f));
 						}
 					}
 
@@ -651,18 +837,21 @@ int main(int, char **)
 				{
 					ImGui::StyleColorsDark();
 					设置.主题样式 = 0;
+					设置.save_set();
 				}
 				ImGui::SameLine();
 				if (ImGui::SmallButton("白色主题"))
 				{
 					ImGui::StyleColorsLight();
 					设置.主题样式 = 1;
+					设置.save_set();
 				}
 				ImGui::SameLine();
 				if (ImGui::SmallButton("经典主题"))
 				{
 					ImGui::StyleColorsClassic();
 					设置.主题样式 = 2;
+					设置.save_set();
 				}
 				ImGui::InputFloat("字体大小", &设置.字体大小, 1.0f, 2.0f, "%.0f");
 				ImGui::Text("更改字体大小需要重启生效!");
@@ -685,6 +874,7 @@ int main(int, char **)
 						y = 620;
 					}
 					SDL_SetWindowSize(window, x, y);
+					设置.save_set();
 				}
 				ImGui::EndTabItem();
 			}

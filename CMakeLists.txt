@@ -16,6 +16,8 @@ set(SOURCES_BASE "src/main.cpp"
                  "src/settings.cpp"
                  "src/getinfos.cpp"
                  "src/install.cpp"
+                 "src/unzip.cpp"
+                 "src/MyMd5.cpp"
                  )
 
 # setup OS-specific options

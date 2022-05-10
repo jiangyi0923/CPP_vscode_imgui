@@ -7,7 +7,7 @@
 
 settings::settings()
 {
-    CreateDir("Installcache");
+    
     pg_ini.SetUnicode(true);
     全部插件数据.push_back({0, "gw2addon_arcdps.dll", "ARCDPS插件", "", "Shift + Alt + T 设置界面\r\nShift + Alt + H 隐藏 / 显示所有界面\r\nShift + Alt + B BUFF面板（BUFF TABLE）显示/隐藏\r\nShift + Alt + C 团队统计（AREA STATS） 显示 / 隐藏\r\nShift + Alt + S 个人统计（SELF） 显示 / 隐藏", true, 0, 0, ""});
     全部插件数据.push_back({1, "d3d9_arcdps_sct.dll", "SCT流动输出", "", "快捷键:无,设置在dps插件设置菜单内\r\n不太稳定,不建议安装,在战场和pvp概率报错", false, 0, 0, ""});
@@ -32,12 +32,128 @@ settings::~settings()
 {
 }
 
+float settings::项目进度()
+{
+    return 项目完成数量 / 项目总计数量 ;
+}
+
+string settings::GetFIleDescription(CHAR* file_path) {
+    string description = "";
+
+    //获取版本信息大小
+    DWORD dwSize = GetFileVersionInfoSizeA(file_path, nullptr);
+    if (dwSize > 0) {
+        CHAR* pBuf = new CHAR[dwSize + 1];
+        memset(pBuf, 0, dwSize + 1);
+        //获取版本信息
+        GetFileVersionInfoA(file_path, NULL, dwSize, pBuf);
+
+        // Read the list of languages and code pages.
+        LPVOID lpBuffer = nullptr;
+        UINT uLen = 0;
+
+        UINT nQuerySize;
+        DWORD* pTransTable;
+        ::VerQueryValueA(pBuf, "\\VarFileInfo\\Translation", (void**)&pTransTable, &nQuerySize);
+        DWORD m_dwLangCharset = MAKELONG(HIWORD(pTransTable[0]), LOWORD(pTransTable[0]));
+
+        CHAR SubBlock[50] = { 0 };
+        sprintf_s(SubBlock, 50, R"(\StringFileInfo\%08lx\ProductVersion)", m_dwLangCharset);
+        //CompanyName
+        //    FileDescription
+        //    FileVersion
+        //    InternalName
+        //    LegalCopyright
+        //    OriginalFilename
+        //    ProductName
+        //    ProductVersion
+        //    Comments
+        //    LegalTrademarks
+        //    PrivateBuild
+        //    SpecialBuild
+        VerQueryValueA(pBuf, SubBlock, &lpBuffer, &uLen);
+        if (uLen) description = (CHAR*)lpBuffer;
+        delete[]pBuf;
+    }
+    printf("%s \r\n", description.c_str());
+    string description1 =  description.substr(0, 2);
+    string description2 = description.substr(3, 2);
+    v1 = std::stoi(description1);
+    v2 = std::stoi(description2);
+ //   printf("%s \r\n", description1.c_str());
+//    printf("%s \r\n", description2.c_str());
+    addlog("当前电脑 vc++ 版本:");
+    addlog(description);
+    return description;
+}
+
+void settings::Versionchick()
+{
+
+    GetFIleDescription(R"(C:\Windows\System32\vcomp140.dll)");
+    if (v1 >= 14 && v2 >= 27)
+    {
+        addlog("VC++版本合格");
+    }
+    else
+    {
+        v1 = 0; v2 = 0;
+        GetFIleDescription(R"(C:\Windows\System32\vcamp140.dll)");
+        if (v1 >= 14 && v2 >= 27)
+        {
+            addlog("VC++版本合格");
+        }
+        else
+        {
+            v1 = 0; v2 = 0;
+            GetFIleDescription(R"(C:\Windows\System32\vcruntime140.dll)");
+            if (v1 >= 14 && v2 >= 27)
+            {
+                addlog("VC++版本合格");
+            }
+            else
+            {
+                v1 = 0; v2 = 0;
+                GetFIleDescription(R"(C:\Windows\SysWOW64\vcomp140.dll)");
+                if (v1 >= 14 && v2 >= 27)
+                {
+                   addlog("VC++版本合格");
+                }
+                else
+                {
+                    v1 = 0; v2 = 0;
+                    GetFIleDescription(R"(C:\Windows\SysWOW64\vcamp140.dll)");
+                    if (v1 >= 14 && v2 >= 27)
+                    {
+                        addlog("VC++版本合格");
+                    }
+                    else
+                    {
+                        v1 = 0; v2 = 0;
+                        GetFIleDescription(R"(C:\Windows\SysWOW64\vcruntime140.dll)");
+                        if (v1 >= 14 && v2 >= 27)
+                        {
+                            addlog("VC++版本合格");
+                        }
+                        else
+                        {
+                            vc版本不合格 = true;
+                            addlog("VC++版本不合格!请安装v14.27以上vc++2015-2019或vc++2015-2022!");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+}
+
 void settings::load_set()
 {
     addlog("开始读取设置存档");
-    CreateDir(GetExePath() + "\\Installcache");
+    //CreateDir(GetExePath() + "\\Installcache");
     pg_ini.SetUnicode(true);
-    游戏根目录 = GetExePath();
+    //游戏根目录 = GetExePath();
     std::string ppp = 游戏根目录 + "\\Installcache\\install.ini";
     pg_ini.LoadFile(ppp.c_str());
     dx11模式 = std::stoi(pg_ini.GetValue("general", "dx11模式", "0"));
@@ -84,7 +200,7 @@ string settings::GetExePath(void)
 }
 
 //得到文件是否存在
-inline bool settings::file_exists(const string &name)
+bool settings::file_exists(string name)
 {
     struct stat buffer;
     return (stat(name.c_str(), &buffer) == 0);
