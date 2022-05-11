@@ -146,7 +146,7 @@ void setup()
 		y = 620;
 	}
 
-	window = SDL_CreateWindow("激战2插件在线安装工具 V2.1.1b", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
+	window = SDL_CreateWindow("激战2插件在线安装工具 V2.1.2b", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	// SDL_SetWindowSize(window,x,y);
@@ -484,6 +484,26 @@ int main(int, char **)
 				}
 				ImGui::ProgressBar(设置.全部插件数据[10].dowpr, ImVec2(child_rect_min.x * 1.8f, 0.f));
 				ImGui::PopStyleColor(1);
+
+				ImGui::Checkbox(设置.全部插件数据[12].display_name.c_str(), &设置.全部插件数据[12].used);
+				ImGui::SameLine();
+				HelpMarker(设置.全部插件数据[12].helpstring.c_str());
+				ImGui::SameLine(child_rect_min.x * 1.8f);
+				if (设置.全部插件数据[12].is_Download_erro)
+				{
+					ImGui::PushStyleColor(ImGuiCol_PlotHistogram, {0.89f, 0.15f, 0.15f, 1.0f});
+				}
+				else
+				{
+					ImGui::PushStyleColor(ImGuiCol_PlotHistogram, {0.15f, 0.89f, 0.15f, 1.0f});
+				}
+				if (设置.全部插件数据[12].is_Download_ok && !设置.全部插件数据[12].is_Download_erro)
+				{
+					设置.全部插件数据[12].dowpr = 1.0f;
+				}
+				ImGui::ProgressBar(设置.全部插件数据[12].dowpr, ImVec2(child_rect_min.x * 1.8f, 0.f));
+				ImGui::PopStyleColor(1);
+
 				if (设置.dx11模式 == 0)
 				{
 					if (!设置.全部插件数据[0].used)
@@ -517,10 +537,14 @@ int main(int, char **)
 					设置.全部插件数据[11].used = false;
 				}
 
-				if (设置.全部插件数据[9].used || 设置.全部插件数据[10].used)
+				if (设置.全部插件数据[9].used || 设置.全部插件数据[10].used || 设置.全部插件数据[12].used)
 					设置.全部插件数据[11].used = false;
 				if (设置.全部插件数据[11].used)
-					设置.全部插件数据[9].used = 设置.全部插件数据[10].used = false;
+					设置.全部插件数据[9].used = 设置.全部插件数据[10].used = 设置.全部插件数据[12].used = false;
+				if (设置.全部插件数据[10].used)
+					设置.全部插件数据[12].used = false;
+				if (设置.全部插件数据[12].used)
+					设置.全部插件数据[10].used = false;
 
 				for (size_t i = 0; i < 设置.全部插件数据.size(); i++)
 				{
@@ -634,7 +658,6 @@ int main(int, char **)
 									安装.是卸载 = false;
 									安装.是疑难安装 = false;
 									安装.fordolo();
-									
 								}
 							}
 							ImGui::SameLine();

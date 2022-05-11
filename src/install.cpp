@@ -217,6 +217,7 @@ void install::冲突检测()
 		"addonLoader.dll",
 		"d3d11.dll",
 		"gw2addon_ReShade64.dll",
+		"GShade.ini",
 	};
 
 	设置.addlog("开始清理文件");
@@ -251,6 +252,24 @@ void install::冲突检测()
 	if (GetFileAttributesA((bin64 + "\\reshade-shaders").c_str()))
 	{
 		设置.RemoveDir(bin64 + "\\reshade-shaders");
+	}
+
+	if (GetFileAttributesA((设置.游戏根目录 + "\\gshade-shaders").c_str()))
+	{
+		设置.RemoveDir(设置.游戏根目录 + "\\gshade-shaders");
+	}
+	if (GetFileAttributesA((bin64 + "\\gshade-shaders").c_str()))
+	{
+		设置.RemoveDir(bin64 + "\\gshade-shaders");
+	}
+
+	if (GetFileAttributesA((设置.游戏根目录 + "\\gshade-presets").c_str()))
+	{
+		设置.RemoveDir(设置.游戏根目录 + "\\gshade-presets");
+	}
+	if (GetFileAttributesA((bin64 + "\\gshade-presets").c_str()))
+	{
+		设置.RemoveDir(bin64 + "\\gshade-presets");
 	}
 
 	if (是卸载)
@@ -468,6 +487,43 @@ void install::安装逻辑_线程_疑难()
 			错误计数++;
 		}
 	}
+	else if (设置.全部插件数据[12].used)
+	{
+		// GShade
+		bool repugs = false;
+		string reshard目录 = 设置.游戏根目录 + "\\addons\\ReShade64";
+		设置.CreateDir(reshard目录);
+		if (!unzipfs_ss(存放目录 + 设置.全部插件数据[12].Internal_name, reshard目录))
+		{
+			设置.addlog("解压GShade.zip失败! 请重试!");
+			错误计数++;
+		}
+		int 计次 = 0;
+		while (!设置.file_exists(reshard目录 + "\\" + 设置.全部插件数据[12].file_check_name) && 计次 < 20)
+		{
+			Sleep(100);
+			计次++;
+		}
+		if (计次 < 20)
+		{
+			//if (!设置.全部插件数据[0].used)
+			{
+				设置.file_copy_to(reshard目录 + "\\" + 设置.全部插件数据[12].file_check_name, 设置.游戏根目录 + "\\dxgi.dll");
+			}
+			设置.file_copy_to(reshard目录 + "\\GShade.ini", 设置.游戏根目录 + "\\GShade.ini");
+			repugs = true;
+		}
+		if (repugs)
+		{
+			设置.addlog("GShade滤镜插件已安装-dx11模式");
+			设置.项目完成数量++;
+		}
+		else
+		{
+			设置.addlog("GShade滤镜插件安装失败! 请重试!");
+			错误计数++;
+		}
+	}
 
 	设置.addlog("删除临时目录");
 	设置.RemoveDir(设置.游戏根目录 + "\\addons\\peizi");
@@ -620,19 +676,19 @@ void install::安装逻辑_线程()
 	{
 		//解压dps包装模块插件
 		设置.CreateDir(设置.游戏根目录 + "\\addons\\d3d9_wrapper");
-		if (!unzipfs_ss(存放目录 + 设置.全部插件数据[14].Internal_name, 设置.游戏根目录 + "\\addons\\d3d9_wrapper"))
+		if (!unzipfs_ss(存放目录 + 设置.全部插件数据[15].Internal_name, 设置.游戏根目录 + "\\addons\\d3d9_wrapper"))
 		{
 			设置.addlog("dps包装插件文件解压失败!");
 		}
 		Sleep(200);
-		if (设置.file_exists(设置.游戏根目录 + "\\addons\\" + 设置.全部插件数据[14].file_check_name))
+		if (设置.file_exists(设置.游戏根目录 + "\\addons\\" + 设置.全部插件数据[15].file_check_name))
 		{
-			设置.addlog(设置.全部插件数据[14].display_name + "安装完成");
+			设置.addlog(设置.全部插件数据[15].display_name + "安装完成");
 			设置.项目完成数量++;
 		}
 		else
 		{
-			设置.addlog(设置.全部插件数据[14].display_name + "安装失败");
+			设置.addlog(设置.全部插件数据[15].display_name + "安装失败");
 			错误计数++;
 		}
 	}
@@ -652,7 +708,7 @@ void install::安装逻辑_线程()
 			设置.file_copy_to(peizi + "\\d3d9.dll", 设置.游戏根目录 + "\\bin64\\d3d9.dll");
 			if (!设置.空中网客户端)
 			{
-				if (!unzipfs_ss(存放目录 + 设置.全部插件数据[13].Internal_name, 设置.游戏根目录))
+				if (!unzipfs_ss(存放目录 + 设置.全部插件数据[14].Internal_name, 设置.游戏根目录))
 				{
 					设置.addlog("专用调用文件解压失败!");
 				}
@@ -702,11 +758,21 @@ void install::安装逻辑_线程()
 				}
 				Sleep(200);
 				// gw2addon_
-				设置.file_rename(设置.游戏根目录 + "\\gw2addon_ReShade64.dll", 设置.游戏根目录 + "\\dxgi.dll");
-				Sleep(100);
-				if (设置.file_exists(设置.游戏根目录 + "\\dxgi.dll"))
+				int 计次 = 0;
+				while (!设置.file_exists(设置.游戏根目录 + "\\" + 设置.全部插件数据[10].file_check_name) && 计次 < 20)
 				{
-					repugs = true;
+					Sleep(100);
+					计次++;
+				}
+				if (计次 < 20)
+				{
+					Sleep(100);
+					设置.file_rename(设置.游戏根目录 + "\\gw2addon_ReShade64.dll", 设置.游戏根目录 + "\\dxgi.dll");
+					Sleep(100);
+					if (设置.file_exists(设置.游戏根目录 + "\\dxgi.dll"))
+					{
+						repugs = true;
+					}
 				}
 			}
 			else
@@ -721,7 +787,13 @@ void install::安装逻辑_线程()
 				// gw2addon_
 				// filerename(游戏根目录 + "\\gw2addon_ReShade64.dll", 游戏根目录 + "\\dxgi.dll");
 				// Sleep(100);
-				if (设置.file_exists(reshard目录 + "\\gw2addon_ReShade64.dll"))
+				int 计次 = 0;
+				while (!设置.file_exists(reshard目录 + "\\" + 设置.全部插件数据[10].file_check_name) && 计次 < 20)
+				{
+					Sleep(100);
+					计次++;
+				}
+				if (计次 < 20)
 				{
 					repugs = true;
 				}
@@ -735,6 +807,42 @@ void install::安装逻辑_线程()
 			else
 			{
 				设置.addlog("ReShade滤镜插件安装失败! 请重试!");
+				错误计数++;
+			}
+		}
+		else if (设置.全部插件数据[12].used)
+		{
+			// GShade
+			bool repugs = false;
+			设置.CreateDir(reshard目录);
+			if (!unzipfs_ss(存放目录 + 设置.全部插件数据[12].Internal_name, reshard目录))
+			{
+				设置.addlog("解压GShade.zip失败! 请重试!");
+				错误计数++;
+			}
+			int 计次 = 0;
+			while (!设置.file_exists(reshard目录 + "\\" + 设置.全部插件数据[12].file_check_name) && 计次 < 20)
+			{
+				Sleep(100);
+				计次++;
+			}
+			if (计次 < 20)
+			{
+				if (!设置.全部插件数据[0].used)
+				{
+					设置.file_copy_to(reshard目录 + "\\" + 设置.全部插件数据[12].file_check_name, 设置.游戏根目录 + "\\dxgi.dll");
+				}
+				设置.file_copy_to(reshard目录 + "\\GShade.ini", 设置.游戏根目录 + "\\GShade.ini");
+				repugs = true;
+			}
+			if (repugs)
+			{
+				设置.addlog("GShade滤镜插件已安装-dx11模式");
+				设置.项目完成数量++;
+			}
+			else
+			{
+				设置.addlog("GShade滤镜插件安装失败! 请重试!");
 				错误计数++;
 			}
 		}
@@ -952,6 +1060,67 @@ void install::安装逻辑_线程()
 			else
 			{
 				设置.addlog("ReShade滤镜插件安装失败! 请重试!");
+				错误计数++;
+			}
+		}
+		else if (设置.全部插件数据[12].used)
+		{
+			bool repugs = false;
+			设置.CreateDir(reshard目录);
+			if (!unzipfs_ss(存放目录 + 设置.全部插件数据[12].Internal_name, reshard目录))
+			{
+				设置.addlog("解压GShade.zip失败! 请重试!");
+				错误计数++;
+			}
+			int 计次 = 0;
+			while (!设置.file_exists(reshard目录 + "\\" + 设置.全部插件数据[12].file_check_name) && 计次 < 20)
+			{
+				Sleep(100);
+				计次++;
+			}
+			if (计次 < 20)
+			{
+				if (设置.空中网客户端)
+				{
+
+					if (!设置.全部插件数据[0].used)
+					{
+						if (设置.全部插件数据[9].used)
+						{
+							设置.file_copy_to(reshard目录 + "\\" + 设置.全部插件数据[12].file_check_name, 设置.游戏根目录 + "\\dxgi.dll");
+						}
+						else
+						{
+							设置.file_copy_to(reshard目录 + "\\" + 设置.全部插件数据[12].file_check_name, 设置.游戏根目录 + "\\bin64\\d3d9.dll");
+						}
+					}
+				}
+				else
+				{
+					if (!设置.全部插件数据[0].used)
+					{
+						if (设置.全部插件数据[9].used)
+						{
+							设置.file_copy_to(reshard目录 + "\\" + 设置.全部插件数据[12].file_check_name, 设置.游戏根目录 + "\\dxgi.dll");
+						}
+						else
+						{
+							设置.file_copy_to(reshard目录 + "\\" + 设置.全部插件数据[12].file_check_name, 设置.游戏根目录 + "\\d3d9.dll");
+						}
+					}
+				}
+
+				设置.file_copy_to(reshard目录 + "\\GShade.ini", 设置.游戏根目录 + "\\GShade.ini");
+				repugs = true;
+			}
+			if (repugs)
+			{
+				设置.addlog("GShade滤镜插件已安装-dx9模式");
+				设置.项目完成数量++;
+			}
+			else
+			{
+				设置.addlog("GShade滤镜插件安装失败! 请重试!");
 				错误计数++;
 			}
 		}
