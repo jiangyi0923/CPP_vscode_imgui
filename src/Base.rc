@@ -3,4 +3,5 @@
 
 ID_FONT                 RCDATA                  "font.ttf"
 IDI_ICON1               ICON                    "Gw2-64_00003.ico"
-
+ID_PD                   RCDATA                  "pd.png"
+ID_ZFB                  RCDATA                  "zfb.png"

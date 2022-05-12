@@ -69,9 +69,11 @@ public:
     float 项目完成数量 = 0;
     float 项目总计数量 = 0;
     float 项目进度();
-
+    int DPS字体大小 = 13;
+    void save_dps();
 private:
     CSimpleIniA pg_ini;
+    CSimpleIniA pg_ini_dps;
     string GetFIleDescription(CHAR *file_path);
     int v1, v2;
 };

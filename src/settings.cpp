@@ -7,7 +7,7 @@
 
 settings::settings()
 {
-    
+
     pg_ini.SetUnicode(true);
     全部插件数据.push_back({0, "gw2addon_arcdps.dll", "ARCDPS插件", "", "Shift + Alt + T 设置界面\r\nShift + Alt + H 隐藏 / 显示所有界面\r\nShift + Alt + B BUFF面板（BUFF TABLE）显示/隐藏\r\nShift + Alt + C 团队统计（AREA STATS） 显示 / 隐藏\r\nShift + Alt + S 个人统计（SELF） 显示 / 隐藏", true, 0, 0, ""});
     全部插件数据.push_back({1, "d3d9_arcdps_sct.dll", "SCT流动输出", "", "快捷键:无,设置在dps插件设置菜单内\r\n不太稳定,不建议安装,在战场和pvp概率报错", false, 0, 0, ""});
@@ -23,7 +23,7 @@ settings::settings()
     全部插件数据.push_back({10, "gw2addon_ReShade64.dll", "ReShade插件", "", "快捷键:HOME\r\n效果配置文件名:DefaultPreset.ini \r\n注意: 要是启用了不兼容的模块导致游戏闪退 \r\n请删除 DefaultPreset.ini 再次进游戏即可恢复\r\n可实时自定义效果,自带本人调试的基础效果不喜可以自己调试", false, 0, 0, ""});
     全部插件数据.push_back({11, "d3d9.dll", "SweetFX插件", "", "开关快捷键:INSERT\r\n效果配置过于繁琐而且不方便查看适合懒人,不能与reshard滤镜,d912pxy共存", false, 0, 0, ""});
     全部插件数据.push_back({12, "gw2addon_ReShade64.dll", "GShade插件", "", "本插件为ReShade插件的改版插件\r\n快捷键:HOME\r\n效果配置文件名:gshade-presets/Custom/Off.ini \r\n注意: 要是启用了不兼容的模块导致游戏闪退 \r\n请删除 Off.ini 再次进游戏即可恢复\r\n可实时自定义效果,自带本人调试的基础效果不喜可以自己调试", false, 0, 0, ""});
-    
+
     全部插件数据.push_back({96, "d3d9_chainload.dll", "调用文件", "", "", false, 0, 0, ""});                           // 13
     全部插件数据.push_back({97, "d3d9.dll", "WG专用调用文件", "", "", false, 0, 0, ""});                               // 14
     全部插件数据.push_back({98, "d3d9_wrapper\\gw2addon_d3d9_wrapper.dll", "ARCDPS插件包装", "", "", true, 0, 0, ""}); // 15
@@ -36,16 +36,18 @@ settings::~settings()
 
 float settings::项目进度()
 {
-    return 项目完成数量 / 项目总计数量 ;
+    return 项目完成数量 / 项目总计数量;
 }
 
-string settings::GetFIleDescription(CHAR* file_path) {
+string settings::GetFIleDescription(CHAR *file_path)
+{
     string description = "";
 
     //获取版本信息大小
     DWORD dwSize = GetFileVersionInfoSizeA(file_path, nullptr);
-    if (dwSize > 0) {
-        CHAR* pBuf = new CHAR[dwSize + 1];
+    if (dwSize > 0)
+    {
+        CHAR *pBuf = new CHAR[dwSize + 1];
         memset(pBuf, 0, dwSize + 1);
         //获取版本信息
         GetFileVersionInfoA(file_path, NULL, dwSize, pBuf);
@@ -55,35 +57,36 @@ string settings::GetFIleDescription(CHAR* file_path) {
         UINT uLen = 0;
 
         UINT nQuerySize;
-        DWORD* pTransTable;
-        ::VerQueryValueA(pBuf, "\\VarFileInfo\\Translation", (void**)&pTransTable, &nQuerySize);
+        DWORD *pTransTable;
+        ::VerQueryValueA(pBuf, "\\VarFileInfo\\Translation", (void **)&pTransTable, &nQuerySize);
         DWORD m_dwLangCharset = MAKELONG(HIWORD(pTransTable[0]), LOWORD(pTransTable[0]));
 
-        CHAR SubBlock[50] = { 0 };
+        CHAR SubBlock[50] = {0};
         sprintf_s(SubBlock, 50, R"(\StringFileInfo\%08lx\ProductVersion)", m_dwLangCharset);
-        //CompanyName
-        //    FileDescription
-        //    FileVersion
-        //    InternalName
-        //    LegalCopyright
-        //    OriginalFilename
-        //    ProductName
-        //    ProductVersion
-        //    Comments
-        //    LegalTrademarks
-        //    PrivateBuild
-        //    SpecialBuild
+        // CompanyName
+        //     FileDescription
+        //     FileVersion
+        //     InternalName
+        //     LegalCopyright
+        //     OriginalFilename
+        //     ProductName
+        //     ProductVersion
+        //     Comments
+        //     LegalTrademarks
+        //     PrivateBuild
+        //     SpecialBuild
         VerQueryValueA(pBuf, SubBlock, &lpBuffer, &uLen);
-        if (uLen) description = (CHAR*)lpBuffer;
-        delete[]pBuf;
+        if (uLen)
+            description = (CHAR *)lpBuffer;
+        delete[] pBuf;
     }
     printf("%s \r\n", description.c_str());
-    string description1 =  description.substr(0, 2);
+    string description1 = description.substr(0, 2);
     string description2 = description.substr(3, 2);
     v1 = std::stoi(description1);
     v2 = std::stoi(description2);
- //   printf("%s \r\n", description1.c_str());
-//    printf("%s \r\n", description2.c_str());
+    //   printf("%s \r\n", description1.c_str());
+    //    printf("%s \r\n", description2.c_str());
     addlog("当前电脑 vc++ 版本:");
     addlog(description);
     return description;
@@ -99,7 +102,8 @@ void settings::Versionchick()
     }
     else
     {
-        v1 = 0; v2 = 0;
+        v1 = 0;
+        v2 = 0;
         GetFIleDescription(R"(C:\Windows\System32\vcamp140.dll)");
         if (v1 >= 14 && v2 >= 27)
         {
@@ -107,7 +111,8 @@ void settings::Versionchick()
         }
         else
         {
-            v1 = 0; v2 = 0;
+            v1 = 0;
+            v2 = 0;
             GetFIleDescription(R"(C:\Windows\System32\vcruntime140.dll)");
             if (v1 >= 14 && v2 >= 27)
             {
@@ -115,15 +120,17 @@ void settings::Versionchick()
             }
             else
             {
-                v1 = 0; v2 = 0;
+                v1 = 0;
+                v2 = 0;
                 GetFIleDescription(R"(C:\Windows\SysWOW64\vcomp140.dll)");
                 if (v1 >= 14 && v2 >= 27)
                 {
-                   addlog("VC++版本合格");
+                    addlog("VC++版本合格");
                 }
                 else
                 {
-                    v1 = 0; v2 = 0;
+                    v1 = 0;
+                    v2 = 0;
                     GetFIleDescription(R"(C:\Windows\SysWOW64\vcamp140.dll)");
                     if (v1 >= 14 && v2 >= 27)
                     {
@@ -131,7 +138,8 @@ void settings::Versionchick()
                     }
                     else
                     {
-                        v1 = 0; v2 = 0;
+                        v1 = 0;
+                        v2 = 0;
                         GetFIleDescription(R"(C:\Windows\SysWOW64\vcruntime140.dll)");
                         if (v1 >= 14 && v2 >= 27)
                         {
@@ -147,13 +155,12 @@ void settings::Versionchick()
             }
         }
     }
-
 }
 
 void settings::load_set()
 {
     addlog("开始读取设置存档");
-    //CreateDir(GetExePath() + "\\Installcache");
+    // CreateDir(GetExePath() + "\\Installcache");
     pg_ini.SetUnicode(true);
     //游戏根目录 = GetExePath();
     std::string ppp = 游戏根目录 + "\\Installcache\\install.ini";
@@ -167,6 +174,11 @@ void settings::load_set()
     {
         全部插件数据[i].used = pg_ini.GetBoolValue("general", 全部插件数据[i].display_name.c_str(), 全部插件数据[i].used);
     }
+
+    pg_ini_dps.SetUnicode(true);
+    std::string ppp2 = 游戏根目录 + "\\addons\\arcdps\\arcdps.ini";
+    pg_ini_dps.LoadFile(ppp2.c_str());
+    DPS字体大小 = std::stoi(pg_ini_dps.GetValue("session", "font_size", "13"));
 
     addlog("已成功读取/设定选项存档");
 }
@@ -189,7 +201,18 @@ void settings::save_set()
 
     std::string ppp = 游戏根目录 + "\\Installcache\\install.ini";
     pg_ini.SaveFile(ppp.c_str());
+
     addlog("保存设置存档");
+}
+
+void settings::save_dps()
+{
+    pg_ini_dps.SetUnicode(true);
+    pg_ini_dps.SetValue("session", "font_size", std::to_string(DPS字体大小).c_str());
+    pg_ini_dps.SetValue("panel_metrics", "visible", "1");
+    pg_ini_dps.SetValue("panel_metrics", "params", "AAAAAAAAAAABAAAAAAAAAOW4p+eOhzpAMSDlu7bov586QDIg5ZON5bqUOkAzAAAA");
+    std::string ppp = 游戏根目录 + "\\addons\\arcdps\\arcdps.ini";
+    pg_ini_dps.SaveFile(ppp.c_str());
 }
 
 string settings::GetExePath(void)

@@ -10,7 +10,8 @@
 #include "global.h"
 #include "getinfos.h"
 #include "install.h"
-
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 #include "tlhelp32.h"
 #pragma comment(lib, "Msi.lib")
 
@@ -28,6 +29,15 @@ SDL_Window *window = nullptr;
 SDL_GLContext gl_context = nullptr;
 void *fontPtr;
 size_t fontSize;
+
+int my_image_width = 0;
+int my_image_height = 0;
+GLuint my_image_texture = 0;
+
+int zfb_width = 0;
+int zfb_height = 0;
+GLuint zfb_texture = 0;
+
 //加载字体
 bool LoadFontResource(UINT resId, void *&dataPtr, size_t &dataSize)
 {
@@ -44,6 +54,63 @@ bool LoadFontResource(UINT resId, void *&dataPtr, size_t &dataSize)
 		}
 	}
 	return false;
+}
+
+bool LoadTextureFromFile(UINT resId, GLuint *out_texture, int *out_width, int *out_height)
+{
+	// Load from file
+	int image_width = 0;
+	int image_height = 0;
+	void *dataPtr;
+	size_t dataSize;
+	auto res = FindResource(nullptr, MAKEINTRESOURCE(resId), RT_RCDATA);
+	if (res)
+	{
+		auto handle = LoadResource(nullptr, res);
+		if (handle)
+		{
+			dataSize = SizeofResource(nullptr, res);
+			dataPtr = LockResource(handle);
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	unsigned char *image_data = stbi_load_from_memory((const stbi_uc *)dataPtr, (int)dataSize, &image_width, &image_height, NULL, 4);
+
+	// unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
+	if (image_data == NULL)
+		return false;
+
+	// Create a OpenGL texture identifier
+	GLuint image_texture;
+	glGenTextures(1, &image_texture);
+	glBindTexture(GL_TEXTURE_2D, image_texture);
+
+	// Setup filtering parameters for display
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
+
+	// Upload pixels into texture
+#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+	stbi_image_free(image_data);
+
+	*out_texture = image_texture;
+	*out_width = image_width;
+	*out_height = image_height;
+
+	return true;
 }
 
 int foundProcess360()
@@ -146,7 +213,7 @@ void setup()
 		y = 620;
 	}
 
-	window = SDL_CreateWindow("激战2插件在线安装工具 V2.1.2b", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
+	window = SDL_CreateWindow("激战2插件在线安装工具 V2.1.3b", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	// SDL_SetWindowSize(window,x,y);
@@ -185,6 +252,15 @@ void setup()
 		io.Fonts->AddFontFromMemoryTTF(fontPtr, int(fontSize), 设置.字体大小, &fontCfg, io.Fonts->GetGlyphRangesChineseFull());
 	}
 
+	if (LoadTextureFromFile(ID_PD, &my_image_texture, &my_image_width, &my_image_height))
+	{
+		/* code */
+	}
+	if (LoadTextureFromFile(ID_ZFB, &zfb_texture, &zfb_width, &zfb_height))
+	{
+		/* code */
+	}
+
 	ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
 	ImGui_ImplOpenGL3_Init();
 }
@@ -200,6 +276,7 @@ void shutdown()
 	window = nullptr;
 	gl_context = nullptr;
 	SDL_Quit();
+	// ImGui::Image();
 }
 
 static void HelpMarker(const char *desc)
@@ -284,6 +361,9 @@ int main(int, char **)
 		{
 
 			设置.CreateDir("Installcache");
+			设置.CreateDir("addons");
+			设置.CreateDir("addons\\arcdps");
+			设置.CreateDir("bin64");
 
 			if (设置.file_exists(设置.游戏根目录 + "\\GW2WGLauncher.exe"))
 			{
@@ -592,7 +672,7 @@ int main(int, char **)
 						if ((n % 4) != 0)
 							ImGui::SameLine();
 						ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.8f, 0.5f, 0.5f, 1.0f});
-						ImGui::SmallButton(列表文[n].c_str());
+						ImGui::Button(列表文[n].c_str());
 						ImGui::PopStyleColor(1);
 						if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 						{
@@ -856,49 +936,92 @@ int main(int, char **)
 			if (ImGui::BeginTabItem("主题"))
 			{
 
-				if (ImGui::SmallButton("黑色主题"))
+				if (ImGui::Button("黑色主题"))
 				{
 					ImGui::StyleColorsDark();
 					设置.主题样式 = 0;
 					设置.save_set();
 				}
 				ImGui::SameLine();
-				if (ImGui::SmallButton("白色主题"))
+				if (ImGui::Button("白色主题"))
 				{
 					ImGui::StyleColorsLight();
 					设置.主题样式 = 1;
 					设置.save_set();
 				}
 				ImGui::SameLine();
-				if (ImGui::SmallButton("经典主题"))
+				if (ImGui::Button("经典主题"))
 				{
 					ImGui::StyleColorsClassic();
 					设置.主题样式 = 2;
 					设置.save_set();
 				}
-				ImGui::InputFloat("字体大小", &设置.字体大小, 1.0f, 2.0f, "%.0f");
-				ImGui::Text("更改字体大小需要重启生效!");
-				if (设置.字体大小 > 24.0f || 设置.字体大小 < 15.0f)
+				ImGui::SetNextItemWidth(120.f);
+				if (ImGui::InputFloat("本工具字体大小", &设置.字体大小, 1.0f, 2.0f, "%.0f"))
 				{
-					if (设置.字体大小 > 24.0f)
-						设置.字体大小 = 24.0f;
-					if (设置.字体大小 < 15.0f)
-						设置.字体大小 = 15.0f;
-
-					int x, y;
-					if (设置.字体大小 > 15.0f)
+					
+					if (设置.字体大小 > 24.0f || 设置.字体大小 < 15.0f)
 					{
-						x = int(400 * (设置.字体大小 * 0.005f + 1));
-						y = int(620 * (设置.字体大小 * 0.005f + 1));
+						int x, y;
+						if (设置.字体大小 > 24.0f)
+							设置.字体大小 = 24.0f;
+						if (设置.字体大小 < 15.0f)
+							设置.字体大小 = 15.0f;
+						if (设置.字体大小 > 15.0f)
+						{
+							x = int(400 * (设置.字体大小 * 0.005f + 1));
+							y = int(620 * (设置.字体大小 * 0.005f + 1));
+						}
+						else
+						{
+							x = 400;
+							y = 620;
+						}
+						SDL_SetWindowSize(window, x, y);
+						设置.save_set();
 					}
-					else
-					{
-						x = 400;
-						y = 620;
-					}
-					SDL_SetWindowSize(window, x, y);
-					设置.save_set();
+					
 				}
+				ImGui::Text("更改本工具字体大小需要重启生效!");
+
+				ImGui::SetNextItemWidth(120.f);
+				if (ImGui::InputInt("ARCDPS插件字体大小", &设置.DPS字体大小))
+				{
+					if (设置.DPS字体大小 > 24 || 设置.DPS字体大小 < 13)
+					{
+						if (设置.DPS字体大小 > 24)
+							设置.DPS字体大小 = 24;
+						if (设置.DPS字体大小 < 13)
+							设置.DPS字体大小 = 13;
+					}
+					设置.save_dps();
+				}
+				ImGui::Text("更改ARCDPS插件字体大小需关闭游戏时设置!");
+
+				ImGui::InvisibleButton("23rwfre", {1, 1});
+				ImGui::InvisibleButton("23rwfre", {1, 1});
+				ImGui::InvisibleButton("23rwfre", {1, 1});
+				ImGui::InvisibleButton("23rwfre", {1, 1});
+				ImGui::SameLine((ImGui::GetContentRegionAvail().x - ImGui::GetContentRegionAvail().x * 0.7f) * 0.5f);
+				ImGui::BeginChild("##optx2222zfb", ImVec2(0, 0), false, ImGuiWindowFlags_NoNav);
+				ImGui::Text("如果喜欢本应用请不吝打赏(支付宝)");
+				ImGui::Image((void *)(intptr_t)zfb_texture, ImVec2(ImGui::GetContentRegionAvail().x * 0.7f, ImGui::GetContentRegionAvail().x * 0.7f));
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("QQ频道"))
+			{
+				if (ImGui::Button("加入QQ频道", ImVec2(ImGui::GetWindowContentRegionMax().x, 50.f)))
+				{
+					ShellExecuteA(0, 0, "https://qun.qq.com/qqweb/qunpro/share?_wv=3&_wwv=128&appChannel=share&inviteCode=1W4qIWf&appChannel=share&businessType=9&from=246610&biz=ka", 0, 0, SW_SHOW);
+				}
+
+				ImGui::InvisibleButton("退了", {1, 1});
+				ImGui::SameLine((ImGui::GetContentRegionAvail().x - (float)my_image_width) * 0.5f);
+				ImGui::BeginChild("##optx2222w", ImVec2(0, 0), false, ImGuiWindowFlags_NoNav);
+				ImGui::Text("请使用手机QQ扫一扫加入频道");
+				ImGui::Image((void *)(intptr_t)my_image_texture, ImVec2((float)my_image_width, (float)my_image_height));
+				ImGui::EndChild();
 				ImGui::EndTabItem();
 			}
 		}
