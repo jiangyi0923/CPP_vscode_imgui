@@ -213,7 +213,7 @@ void setup()
 		y = 620;
 	}
 
-	window = SDL_CreateWindow("激战2插件在线安装工具 V2.1.3b", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
+	window = SDL_CreateWindow("激战2插件在线安装工具 V2.1.4b", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	// SDL_SetWindowSize(window,x,y);
@@ -292,6 +292,10 @@ static void HelpMarker(const char *desc)
 	}
 }
 
+
+
+
+
 int main(int, char **)
 {
 	if (foundProcess360())
@@ -364,27 +368,33 @@ int main(int, char **)
 			设置.CreateDir("addons");
 			设置.CreateDir("addons\\arcdps");
 			设置.CreateDir("bin64");
+			设置.open_log();
+			设置.write_log("前置判断完成");
 
 			if (设置.file_exists(设置.游戏根目录 + "\\GW2WGLauncher.exe"))
 			{
 				设置.空中网客户端 = false;
-				设置.addlog("客户端:WG版:");
+				设置.addlog("客户端:WG版");
+				设置.write_log("客户端:WG版");
 			}
 			else if (设置.file_exists(设置.游戏根目录 + "\\GW2Lanucher.exe"))
 			{
 				设置.空中网客户端 = false;
 				设置.addlog("客户端:顺网版或其他");
+				设置.write_log("客户端:顺网版或其他");
 			}
 			else
 			{
 				设置.空中网客户端 = true;
 				设置.addlog("客户端:空中网或外服");
+				设置.write_log("客户端:空中网或外服");
 			}
 
 			设置.Versionchick();
 			if (设置.vc版本不合格)
 			{
 				设置.mesgebox("vc++版本不合格", "检测到您安装的vc++版本过低或未安装\r\n请前往QQ群或百度下载安装VC++2015-2019/VC++2015-2022 V14.27以上64位版本!");
+				设置.write_log("vc++版本不合格");
 			}
 		}
 	}
@@ -464,9 +474,12 @@ int main(int, char **)
 				ImGui::Text("游戏DX版本:");
 				if (设置.isStarttodo)
 					ImGui::BeginDisabled(true);
-				ImGui::RadioButton("DX9模式", &设置.dx11模式, 0);
-				ImGui::SameLine();
+				//ImGui::RadioButton("DX9模式", &设置.dx11模式, 0);
+				//ImGui::SameLine();
 				ImGui::RadioButton("DX11模式", &设置.dx11模式, 1);
+				ImGui::SameLine();
+				ImGui::Text("因DPS插件不再支持dx9,现已全面禁用DX9模式");
+
 				ImGui::Text("ARCDPS系列插件:");
 				ImVec2 child_rect_min = ImGui::GetItemRectSize();
 
@@ -727,7 +740,7 @@ int main(int, char **)
 							ImGui::Text("请确认已将游戏设置为窗口全屏模式!");
 
 							ImGui::PopStyleColor(1);
-							if (ImGui::Button("安装/更新插件"))
+							if (ImGui::Button("正常安装/更新"))
 							{
 								if (!设置.isStarttodo)
 								{
@@ -815,7 +828,7 @@ int main(int, char **)
 						}
 						if (ImGui::Button("解决方法2.步骤1:获取data.txt文件"))
 						{
-							设置.mesgebox("获取本地data.txt文件说明", "请复制打开的浏览器网页中全部内容,在Installcache目录下新建名为data的文本文档(即data.txt),打开它粘贴你复制的内容并保存后,点击-解析本地data.txt文件-按钮\r\n点击确定打开网页");
+							设置.mesgebox("获取本地data.txt文件说明", "请使用快捷键 CTRL + A 复制打开的浏览器网页中全部内容,在Installcache目录下新建名为data的文本文档(即data.txt),打开它粘贴你复制的内容并保存(保证第一行无空格符或回车符并且文件为UTF-8模式)后,点击-解析本地data.txt文件-按钮\r\n点击确定打开网页");
 							ShellExecuteA(0, 0, "https://gitee.com/api/v5/repos/jiangyi0923/gw2chajianfile/releases/latest?access_token=ea9e8776dbc01bd019ca905d0418c6bf", 0, 0, SW_SHOW);
 						}
 						if (ImGui::Button("解决方法2.步骤2:解析本地data.txt文件"))

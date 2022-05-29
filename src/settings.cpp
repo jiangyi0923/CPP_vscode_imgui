@@ -3,6 +3,7 @@
 
 #include <io.h>
 #include <direct.h>
+#include <stdlib.h>
 #define PATH_DELIMITER '\\'
 
 settings::settings()
@@ -32,12 +33,16 @@ settings::settings()
 
 settings::~settings()
 {
+    outfile.close();
 }
 
 float settings::项目进度()
 {
     return 项目完成数量 / 项目总计数量;
 }
+
+
+
 
 string settings::GetFIleDescription(CHAR *file_path)
 {
@@ -166,6 +171,11 @@ void settings::load_set()
     std::string ppp = 游戏根目录 + "\\Installcache\\install.ini";
     pg_ini.LoadFile(ppp.c_str());
     dx11模式 = std::stoi(pg_ini.GetValue("general", "dx11模式", "0"));
+    if (dx11模式 == 0)
+    {
+        dx11模式 = 1;
+    }
+
     d912pxy_配置 = std::stoi(pg_ini.GetValue("general", "d912pxy_配置", "2"));
     字体大小 = (float)pg_ini.GetDoubleValue("general", "字体大小", 18.0);
     主题样式 = std::stoi(pg_ini.GetValue("general", "主题样式", "0"));
@@ -362,4 +372,19 @@ void settings::mesgebox(string pszTitle, string pszMsg)
     MessageBoxW(NULL, wideMsg, wideTitle, 0);
     delete[] wideMsg;
     delete[] wideTitle;
+}
+void settings::open_log()
+{
+    string path = 游戏根目录 + "\\Installcache\\log.txt";
+    if (file_exists(path))
+    {
+        file_delete(path);
+    }
+    outfile.open(path, ios::app);
+    outfile << "正在使用" << endl;
+}
+//写入日志
+void settings::write_log(string content)
+{
+    outfile << content << endl;
 }

@@ -51,11 +51,14 @@ string getinfos::downloadinfo(const char *Url) /*将Url指向的地址的文件�
 
         FILE *stream;
         HINTERNET hSession = InternetOpenA("RookIE/1.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+        
         if (hSession != NULL)
         {
+            设置.write_log("成功创建连接");
             HINTERNET handle2 = InternetOpenUrlA(hSession, Url, NULL, 0, INTERNET_FLAG_DONT_CACHE, 0);
             if (handle2 != NULL)
             {
+                设置.write_log("从服务器获取API数据成功");
                 设置.addlog("从服务器获取API数据成功");
                 //设置.addlog("1");
                 
@@ -118,6 +121,9 @@ string getinfos::downloadinfo(const char *Url) /*将Url指向的地址的文件�
                     //设置.addlog("7");
                     response.resize(sb.st_size);
                     fread(const_cast<char *>(response.data()), sb.st_size, 1, stream2);
+                    设置.write_log("========获取的内容========");
+                    设置.write_log(response);
+                    设置.write_log("========获取的内容========");
                     //.addlog("8");
                     fclose(stream2);
 
@@ -133,6 +139,7 @@ string getinfos::downloadinfo(const char *Url) /*将Url指向的地址的文件�
             InternetCloseHandle(hSession);
             hSession = NULL;
             设置.addlog("从服务器获取API数据方法完成");
+            设置.write_log("从服务器获取API数据方法完成");
         } /* code */
     }
     catch (const std::exception &e)
@@ -141,6 +148,9 @@ string getinfos::downloadinfo(const char *Url) /*将Url指向的地址的文件�
         设置.addlog(e.what());
         设置.apierro = 101;
         设置.addlog("从服务器获取API数据方法失败");
+        设置.mesgebox("从服务器获取API数据方法失败",e.what());
+        设置.write_log("从服务器获取API数据方法失败");
+        设置.write_log(e.what());
     }
 
     //设置.addlog("9");
@@ -160,6 +170,10 @@ void getinfos::getfileinfo(string filebody)
         设置.m = data.get_mos();
         设置.d = data.get_days();
         设置.dmd5s = data.get_dxmd5();
+        设置.write_log("文件日期:" + 设置.fileday);
+        设置.write_log("限制安装" + to_string(设置.y) +to_string(设置.m)+to_string(设置.d));
+        设置.write_log("文件MD5:" + 设置.dmd5s);
+
         //设置.addlog(to_string(gettime().tm_year));
         if (gettime().tm_year + 1900 > 设置.y)
         {
@@ -187,6 +201,10 @@ void getinfos::getfileinfo(string filebody)
                     设置.全部插件数据[t].Internal_name = data.get_files()[i].get_name();
                     设置.全部插件数据[t].file_md5 = data.get_files()[i].get_md5();
                     设置.全部插件数据[t].file_size = data.get_files()[i].get_size();
+                    设置.write_log("插件ID:" + to_string(设置.全部插件数据[t].id));
+                    设置.write_log("插件名:" + 设置.全部插件数据[t].Internal_name);
+                    设置.write_log("插件MD5:" + 设置.全部插件数据[t].file_md5);
+                    设置.write_log("插件大小:" + to_string(设置.全部插件数据[t].file_size));
                 }
             }
         }
@@ -198,6 +216,9 @@ void getinfos::getfileinfo(string filebody)
         设置.addlog(e.what());
         设置.apierro = 201;
         设置.addlog("解析插件信息数据方法失败");
+        设置.mesgebox("解析插件信息数据方法失败",e.what());
+        设置.write_log("解析插件信息数据方法失败");
+        设置.write_log(e.what());
     }
 }
 
@@ -227,6 +248,7 @@ void getinfos::toget()
                         //设置.addlog("4");
                         设置.全部插件数据[t].Download_url = data.get_assets()[i].get_browser_download_url();
                         //设置.addlog(设置.全部插件数据[t].Download_url);
+                        设置.write_log(设置.全部插件数据[t].Internal_name + " 下载地址 " +设置.全部插件数据[t].Download_url);
                     }
                 }
             }
@@ -240,6 +262,9 @@ void getinfos::toget()
         设置.addlog(e.what());
         设置.apierro = 301;
         设置.addlog("解析API信息数据方法失败!");
+        设置.mesgebox("解析API信息数据方法失败",e.what());
+        设置.write_log("解析API信息数据方法失败");
+        设置.write_log(e.what());
         return;
         //::cerr << e.what() << '\n';
     }
@@ -317,6 +342,7 @@ void getinfos::toget_lc()
                         //设置.addlog("4");
                         设置.全部插件数据[t].Download_url = data.get_assets()[i].get_browser_download_url();
                         //设置.addlog(设置.全部插件数据[t].Download_url);
+                        设置.write_log(设置.全部插件数据[t].Internal_name + " 下载地址 " +设置.全部插件数据[t].Download_url);
                     }
                 }
             }
@@ -328,6 +354,9 @@ void getinfos::toget_lc()
         设置.addlog(e.what());
         设置.apierro = 301;
         设置.addlog("解析API信息数据方法失败!");
+        设置.mesgebox("解析API信息数据方法失败",e.what());
+        设置.write_log("解析API信息数据方法失败");
+        设置.write_log(e.what());
         return;
     }
 }

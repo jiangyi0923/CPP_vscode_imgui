@@ -21,6 +21,7 @@ bool install::md5chick2(string path, string md5v)
 {
 	string md5 = MD5_file(path.c_str(), 32);
 	bool tmpmd5 = md5v._Equal(md5);
+	设置.write_log("文件的md5是:" + md5 + "  实际的md5应是:" + md5v + "  是否相等:" + to_string(tmpmd5));
 	return tmpmd5;
 }
 bool install::unzipfs_ss(string FileDir, string outFileDir)
@@ -29,6 +30,8 @@ bool install::unzipfs_ss(string FileDir, string outFileDir)
 	{
 		设置.mesgebox("解压文件失败", FileDir + "文件不存在!\r\n可能被你的杀软拦截或删除");
 		设置.addlog("解压失败" + FileDir + ",文件不存在!");
+		设置.write_log("解压失败" + FileDir + ",文件不存在!");
+		return false;
 	}
 
 	bool wanc = true;
@@ -44,6 +47,7 @@ bool install::unzipfs_ss(string FileDir, string outFileDir)
 		{
 			设置.mesgebox("解压文件失败", string((char *)ze.name) + "解压失败");
 			设置.addlog("解压" + string((char *)ze.name) + "失败");
+			设置.write_log("解压" + string((char *)ze.name) + "失败");
 			wanc = false;
 			break;
 		}
@@ -127,13 +131,16 @@ void install::download_S(settings::插件 *插件插件)
 		HINTERNET hSession = InternetOpenA("RookIE/1.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 		if (hSession != NULL)
 		{
+			设置.write_log("hSession创建成功");
 			设置.addlog(插件插件->Download_url.c_str());
 			// printf(插件插件.Download_url.c_str());
 			HINTERNET handle2 = InternetOpenUrlA(hSession, 插件插件->Download_url.c_str(), NULL, 0, INTERNET_FLAG_DONT_CACHE, 0);
 			if (handle2 != NULL)
 			{
+				设置.write_log("handle2创建成功");
 				int downloadNow = 0;
 				string save_as = 设置.GetExePath() + "\\Installcache\\" + 插件插件->Internal_name;
+				设置.write_log("开始创建并写入" + save_as);
 				if (fopen_s(&stream, save_as.c_str(), "wb") != EINVAL)
 				{
 					while (Number > 0)
@@ -148,6 +155,7 @@ void install::download_S(settings::插件 *插件插件)
 						fwrite(Temp, sizeof(char), Number, stream);
 					}
 					fclose(stream);
+					
 				}
 
 				InternetCloseHandle(handle2);
@@ -157,6 +165,7 @@ void install::download_S(settings::插件 *插件插件)
 			hSession = NULL;
 			插件插件->is_inDownload = false;
 			插件插件->is_Download_ok = true;
+			设置.write_log("下载完成");
 		}
 	}
 	catch (const std::exception &e)
@@ -165,11 +174,14 @@ void install::download_S(settings::插件 *插件插件)
 		设置.addlog(e.what());
 		插件插件->is_Download_erro = true;
 		插件插件->is_Download_ok = true;
+		设置.write_log("下载失败");
+		设置.write_log(e.what());
 	}
 }
 
 void install::download(settings::插件 *插件插件) /*将Url指向的地址的文件下载到save_as指向的本地文件*/
 {
+	设置.write_log("创建下载线程");
 	std::thread cprCall(&install::download_S, this, 插件插件);
 	cprCall.detach();
 }
@@ -309,12 +321,14 @@ void install::安装逻辑()
 {
 	if (是疑难安装)
 	{
+		设置.write_log("疑难安装");
 		std::thread cprCall([this]()
 							{ 安装逻辑_线程_疑难(); });
 		cprCall.detach();
 	}
 	else
 	{
+		设置.write_log("正常安装");
 		std::thread cprCall([this]()
 							{ 安装逻辑_线程(); });
 		cprCall.detach();
@@ -506,7 +520,7 @@ void install::安装逻辑_线程_疑难()
 		}
 		if (计次 < 20)
 		{
-			//if (!设置.全部插件数据[0].used)
+			// if (!设置.全部插件数据[0].used)
 			{
 				设置.file_copy_to(reshard目录 + "\\" + 设置.全部插件数据[12].file_check_name, 设置.游戏根目录 + "\\dxgi.dll");
 			}
@@ -1201,6 +1215,15 @@ void install::fordolo()
 {
 	设置.项目总计数量 = 0.0f;
 	设置.项目完成数量 = 0.0f;
+
+	if (设置.fileday._Equal("未获取到/获取中"))
+	{
+		设置.mesgebox("错误!未获知服务器信息", "请获取服务器信息后重试!");
+		设置.isStarttodo = false;
+		设置.write_log("未获取到服务器信息安装结束");
+		return;
+	}
+
 	// writelog(to_string(设置.dx11模式));
 	for (auto &i : 设置.全部插件数据)
 	{
@@ -1219,91 +1242,112 @@ void install::fordolo()
 		//}
 		if (i.used)
 		{
+			设置.write_log(i.display_name + "开启");
 			设置.项目总计数量++;
 		}
 	}
 	设置.项目总计数量 = 设置.项目总计数量 * 2.0f + 2.0f;
 
 	设置.isStarttodo = true;
+	设置.write_log("开始线程安装");
 	std::thread cprCall([&]()
 						{
 							int 项目数量 = 0;
 							int 错误数量 = 0;
-							for (size_t i = 0; i < 设置.全部插件数据.size(); i++)
+
+							try
 							{
-
-								bool needtodow = false;
-								//检测文件是否存在
-								if (设置.全部插件数据[i].used)
+								for (size_t i = 0; i < 设置.全部插件数据.size(); i++)
 								{
-									项目数量++;
-									if (设置.file_exists(设置.GetExePath() + "\\Installcache\\" + 设置.全部插件数据[i].Internal_name))
-									{
-										//检测文件md5是否一致
-										if (!md5chick2(设置.GetExePath() + "\\Installcache\\" + 设置.全部插件数据[i].Internal_name, 设置.全部插件数据[i].file_md5))
-										{
 
-											设置.addlog(设置.全部插件数据[i].display_name + "文件MD5不一致,删除文件");
-											设置.file_delete(设置.GetExePath() + "\\Installcache\\" + 设置.全部插件数据[i].Internal_name);
-											needtodow = true;
+									bool needtodow = false;
+									//检测文件是否存在
+									if (设置.全部插件数据[i].used)
+									{
+										设置.write_log(设置.全部插件数据[i].display_name + "开始");
+										项目数量++;
+										if (设置.file_exists(设置.GetExePath() + "\\Installcache\\" + 设置.全部插件数据[i].Internal_name))
+										{
+											//检测文件md5是否一致
+											if (!md5chick2(设置.GetExePath() + "\\Installcache\\" + 设置.全部插件数据[i].Internal_name, 设置.全部插件数据[i].file_md5))
+											{
+
+												设置.addlog(设置.全部插件数据[i].display_name + "文件MD5不一致,删除文件");
+												设置.write_log(设置.全部插件数据[i].display_name + "文件MD5不一致,删除文件");
+												设置.file_delete(设置.GetExePath() + "\\Installcache\\" + 设置.全部插件数据[i].Internal_name);
+												needtodow = true;
+											}
+											else
+											{
+												设置.全部插件数据[i].is_Download_ok = true;
+												设置.全部插件数据[i].is_Download_erro = false;
+												设置.项目完成数量++;
+											}
 										}
 										else
 										{
-											设置.全部插件数据[i].is_Download_ok = true;
-											设置.全部插件数据[i].is_Download_erro = false;
-											设置.项目完成数量++;
+											设置.addlog(设置.全部插件数据[i].display_name + "文件未发现开始下载文件");
+											设置.write_log(设置.全部插件数据[i].display_name + "文件未发现开始下载文件");
+											needtodow = true;
 										}
 									}
-									else
+
+									if (设置.全部插件数据[i].used && !设置.全部插件数据[i].is_inDownload && needtodow)
 									{
-										设置.addlog(设置.全部插件数据[i].display_name + "文件未发现开始下载文件");
-										needtodow = true;
+										设置.全部插件数据[i].is_inDownload = true;
+										download(&设置.全部插件数据[i]);
+										while (!设置.全部插件数据[i].is_Download_ok)
+										{
+
+											Sleep(100);
+										}
+										if (!设置.全部插件数据[i].is_Download_erro)
+										{
+											设置.addlog(设置.全部插件数据[i].display_name + "下载完成");
+										}
+										else
+										{
+											设置.addlog(设置.全部插件数据[i].display_name + "下载过程中出错!");
+										}
+										设置.全部插件数据[i].is_inDownload = false;
+
+										Sleep(1000);
+
+										////检测md5
+										if (!设置.全部插件数据[i].is_Download_erro && 设置.全部插件数据[i].is_Download_ok && !md5chick2(设置.GetExePath() + "\\Installcache\\" + 设置.全部插件数据[i].Internal_name, 设置.全部插件数据[i].file_md5))
+										{
+											设置.全部插件数据[i].is_Download_erro = true;
+											设置.addlog(设置.全部插件数据[i].display_name + "的文件MD5校验不一致请重新下载!");
+											设置.write_log(设置.全部插件数据[i].display_name + "的文件MD5校验不一致请重新下载!");
+										}
+										if (设置.全部插件数据[i].is_Download_erro)
+											错误数量++;
+										设置.项目完成数量++;
 									}
 								}
-
-								if (设置.全部插件数据[i].used && !设置.全部插件数据[i].is_inDownload && needtodow)
+								设置.addlog("项目数量:" + to_string(项目数量) + "错误数量:" + to_string(错误数量));
+								if (错误数量 > 0)
 								{
-									设置.全部插件数据[i].is_inDownload = true;
-									download(&设置.全部插件数据[i]);
-									while (!设置.全部插件数据[i].is_Download_ok)
-									{
-
-										Sleep(100);
-									}
-									if (!设置.全部插件数据[i].is_Download_erro)
-									{
-										设置.addlog(设置.全部插件数据[i].display_name + "下载完成");
-									}
-									else
-									{
-										设置.addlog(设置.全部插件数据[i].display_name + "下载过程中出错!");
-									}
-									设置.全部插件数据[i].is_inDownload = false;
-
-									Sleep(1000);
-
-									////检测md5
-									if (!设置.全部插件数据[i].is_Download_erro && 设置.全部插件数据[i].is_Download_ok && !md5chick2(设置.GetExePath() + "\\Installcache\\" + 设置.全部插件数据[i].Internal_name, 设置.全部插件数据[i].file_md5))
-									{
-										设置.全部插件数据[i].is_Download_erro = true;
-										设置.addlog(设置.全部插件数据[i].display_name + "的文件MD5校验不一致请重新下载!");
-									}
-									if (设置.全部插件数据[i].is_Download_erro)
-										错误数量++;
-									设置.项目完成数量++;
+									设置.addlog("下载过程中有错误项目!请重试!");
+									设置.mesgebox("请重试!", "下载过程中有错误的项目,您需要重新下载!");
+								}
+								else
+								{
+									设置.addlog("全部下载完成!开始安装进程!");
+									//开始安装
+									设置.write_log("全部下载判断完成!开始安装进程!!");
+									安装逻辑();
 								}
 							}
-							设置.addlog("项目数量:" + to_string(项目数量) + "错误数量:" + to_string(错误数量));
-							if (错误数量 > 0)
+							catch (const std::exception &e)
 							{
-								设置.addlog("下载过程中有错误项目!请重试!");
-								设置.mesgebox("请重试!", "下载过程中有错误的项目,您需要重新下载!");
+								设置.addlog("安装进程中出错!");
+								设置.addlog(e.what());
+								设置.isStarttodo = false;
+								设置.mesgebox("安装进程中出错!", e.what());
+								设置.write_log("安装进程中出错!!");
+								设置.write_log(e.what());
 							}
-							else
-							{
-								设置.addlog("全部下载完成!开始安装进程!");
-								//开始安装
-								安装逻辑();
-							} });
+						});
 	cprCall.detach();
 }

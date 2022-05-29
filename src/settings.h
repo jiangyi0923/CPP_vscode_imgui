@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include "SimpleIni.h"
+#include <fstream>
 using namespace std;
 
 class settings
@@ -28,6 +29,7 @@ public:
     settings();
     ~settings();
     void mesgebox(string pszTitle, string pszMsg);
+    bool is_win7();
     vector<插件> 全部插件数据;
     void addlog(string mesgs);
     string output;
@@ -71,9 +73,12 @@ public:
     float 项目进度();
     int DPS字体大小 = 13;
     void save_dps();
+    void write_log(string content);
+    void open_log();
 private:
     CSimpleIniA pg_ini;
     CSimpleIniA pg_ini_dps;
     string GetFIleDescription(CHAR *file_path);
     int v1, v2;
+    ofstream outfile;
 };
